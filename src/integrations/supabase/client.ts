@@ -5,60 +5,117 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://woosegomxvbgzelyqvoj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvb3NlZ29teHZiZ3plbHlxdm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2Nzg3OTAsImV4cCI6MjA3NDI1NDc5MH0.htpKQLRZjqwochLN7MBVI8tA5F-AAwktDd5SLq6vUSc";
 
-// Custom fetch function that forces HTTP/1.1 for restricted networks
-const restrictedNetworkFetch = async (url: string, options: RequestInit = {}) => {
+// Network status detection
+let isOnline = navigator.onLine;
+let retryCount = 0;
+const MAX_RETRIES = 3;
+
+window.addEventListener('online', () => { isOnline = true; retryCount = 0; });
+window.addEventListener('offline', () => { isOnline = false; });
+
+// Enhanced fetch function with comprehensive network handling
+const restrictedNetworkFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+  const baseTimeout = 8000;
+  const timeoutId = setTimeout(() => controller.abort(), baseTimeout + (retryCount * 2000));
 
   try {
-    // Force HTTP/1.1 and disable HTTP/2 upgrade
+    // Skip if clearly offline
+    if (!isOnline) {
+      throw new Error('Network offline');
+    }
+
+    // Enhanced headers to bypass common network restrictions
+    const enhancedHeaders: HeadersInit = {
+      ...options.headers,
+      'Accept': 'application/json, text/plain, */*',
+      'Content-Type': options.method === 'POST' || options.method === 'PUT' || options.method === 'PATCH' 
+        ? 'application/json' 
+        : 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'X-Requested-With': 'XMLHttpRequest',
+      // Remove upgrade headers that might trigger HTTP/2
+      'Connection': 'keep-alive'
+    };
+
+    // Remove problematic headers for restricted networks
+    delete enhancedHeaders['Upgrade-Insecure-Requests'];
+    delete enhancedHeaders['Upgrade'];
+    delete enhancedHeaders['HTTP2-Settings'];
+
     const fetchOptions: RequestInit = {
       ...options,
       signal: controller.signal,
-      headers: {
-        ...options.headers,
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '0',
-      },
-      // Disable HTTP/2 and QUIC
-      cache: 'no-cache',
+      headers: enhancedHeaders,
+      mode: 'cors',
+      credentials: 'omit', // Avoid credential issues on restricted networks
+      referrerPolicy: 'no-referrer-when-downgrade'
     };
 
     const response = await fetch(url, fetchOptions);
     clearTimeout(timeoutId);
+    retryCount = 0; // Reset on success
     return response;
+
   } catch (error) {
     clearTimeout(timeoutId);
     
-    // If QUIC/HTTP3 error, retry with explicit HTTP/1.1 headers
-    if (error instanceof Error && (
-      error.message.includes('QUIC') || 
-      error.message.includes('HTTP/3') ||
-      error.message.includes('ERR_QUIC_PROTOCOL_ERROR')
-    )) {
-      console.warn('QUIC/HTTP3 blocked, retrying with HTTP/1.1 fallback');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const isCorsError = errorMessage.includes('CORS') || errorMessage.includes('cors');
+    const isNetworkError = errorMessage.includes('NetworkError') || errorMessage.includes('fetch');
+    const isQuicError = errorMessage.includes('QUIC') || errorMessage.includes('HTTP/3');
+    
+    console.warn(`Network error (attempt ${retryCount + 1}/${MAX_RETRIES}):`, errorMessage);
+    
+    // Retry logic for network issues
+    if (retryCount < MAX_RETRIES && (isCorsError || isNetworkError || isQuicError)) {
+      retryCount++;
       
-      const fallbackController = new AbortController();
-      const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 15000);
+      // Exponential backoff: 1s, 2s, 4s
+      const backoffDelay = Math.pow(2, retryCount - 1) * 1000;
+      
+      await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      
+      // Retry with simplified headers
+      const retryController = new AbortController();
+      const retryTimeoutId = setTimeout(() => retryController.abort(), baseTimeout * 2);
       
       try {
-        const fallbackResponse = await fetch(url, {
+        const retryOptions: RequestInit = {
           ...options,
-          signal: fallbackController.signal,
+          signal: retryController.signal,
           headers: {
-            ...options.headers,
-            'Connection': 'keep-alive',
-            'HTTP2-Settings': '',
-            'Upgrade': '',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
           },
-        });
-        clearTimeout(fallbackTimeoutId);
-        return fallbackResponse;
-      } catch (fallbackError) {
-        clearTimeout(fallbackTimeoutId);
-        throw fallbackError;
+          mode: 'cors',
+          credentials: 'omit',
+          cache: 'no-cache'
+        };
+        
+        const retryResponse = await fetch(url, retryOptions);
+        clearTimeout(retryTimeoutId);
+        return retryResponse;
+        
+      } catch (retryError) {
+        clearTimeout(retryTimeoutId);
+        
+        // If this is the last retry, throw the original error
+        if (retryCount >= MAX_RETRIES) {
+          throw new Error(`Network requests blocked by firewall. Original error: ${errorMessage}`);
+        }
+        
+        // Continue to next retry
+        return restrictedNetworkFetch(url, options);
       }
     }
+    
+    // Final error with helpful message
+    if (isCorsError || isNetworkError) {
+      throw new Error(`School network blocking requests. Please try from a different network or contact IT support. Error: ${errorMessage}`);
+    }
+    
     throw error;
   }
 };
