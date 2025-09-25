@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Calendar, Clock, MapPin, Users } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
 
 interface Event {
   id: string;
@@ -131,7 +131,11 @@ const EventsSection = () => {
                       </div>
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-1" />
-                        {event.time}
+                        {new Date(`2000-01-01T${event.time}`).toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
                       </div>
                     </div>
                   </div>
@@ -147,9 +151,11 @@ const EventsSection = () => {
                     <Users className="h-4 w-4 mr-2 flex-shrink-0" />
                     <span>{event.participants}</span>
                   </div>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {event.description}
-                  </p>
+                  {event.description && (
+                    <p className="text-muted-foreground leading-relaxed">
+                      {event.description}
+                    </p>
+                  )}
                 </div>
 
                 {/* Countdown Timer */}
