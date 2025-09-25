@@ -5,6 +5,64 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://woosegomxvbgzelyqvoj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvb3NlZ29teHZiZ3plbHlxdm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2Nzg3OTAsImV4cCI6MjA3NDI1NDc5MH0.htpKQLRZjqwochLN7MBVI8tA5F-AAwktDd5SLq6vUSc";
 
+// Custom fetch function that forces HTTP/1.1 for restricted networks
+const restrictedNetworkFetch = async (url: string, options: RequestInit = {}) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+  try {
+    // Force HTTP/1.1 and disable HTTP/2 upgrade
+    const fetchOptions: RequestInit = {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        ...options.headers,
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '0',
+      },
+      // Disable HTTP/2 and QUIC
+      cache: 'no-cache',
+    };
+
+    const response = await fetch(url, fetchOptions);
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    // If QUIC/HTTP3 error, retry with explicit HTTP/1.1 headers
+    if (error instanceof Error && (
+      error.message.includes('QUIC') || 
+      error.message.includes('HTTP/3') ||
+      error.message.includes('ERR_QUIC_PROTOCOL_ERROR')
+    )) {
+      console.warn('QUIC/HTTP3 blocked, retrying with HTTP/1.1 fallback');
+      
+      const fallbackController = new AbortController();
+      const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 15000);
+      
+      try {
+        const fallbackResponse = await fetch(url, {
+          ...options,
+          signal: fallbackController.signal,
+          headers: {
+            ...options.headers,
+            'Connection': 'keep-alive',
+            'HTTP2-Settings': '',
+            'Upgrade': '',
+          },
+        });
+        clearTimeout(fallbackTimeoutId);
+        return fallbackResponse;
+      } catch (fallbackError) {
+        clearTimeout(fallbackTimeoutId);
+        throw fallbackError;
+      }
+    }
+    throw error;
+  }
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
@@ -13,5 +71,16 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+  },
+  global: {
+    fetch: restrictedNetworkFetch,
+  },
+  db: {
+    schema: 'public',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 2,
+    },
+  },
 });
