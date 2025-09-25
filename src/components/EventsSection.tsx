@@ -29,11 +29,20 @@ const EventsSection = () => {
 
       if (error) {
         console.error('Error fetching events:', error);
+        // Show user-friendly message for network issues
+        if (error.message.includes('NetworkError') || error.message.includes('CORS')) {
+          console.warn('Network connectivity issue detected. This may be due to network restrictions.');
+        }
       } else {
         setEvents(data || []);
       }
     } catch (error) {
       console.error('Error fetching events:', error);
+      // Fallback to static content if network is completely blocked
+      if (error instanceof TypeError && error.message.includes('NetworkError')) {
+        console.warn('Using fallback mode due to network restrictions');
+        setEvents([]);
+      }
     } finally {
       setLoading(false);
     }

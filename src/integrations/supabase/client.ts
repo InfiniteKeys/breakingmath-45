@@ -5,25 +5,29 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://woosegomxvbgzelyqvoj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvb3NlZ29teHZiZ3plbHlxdm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2Nzg3OTAsImV4cCI6MjA3NDI1NDc5MH0.htpKQLRZjqwochLN7MBVI8tA5F-AAwktDd5SLq6vUSc";
 
-// Aggressive custom fetch for restricted networks
-const restrictedNetworkFetch = async (url: RequestInfo | URL, options: RequestInit = {}): Promise<Response> => {
+// Force HTTP/1.1 fetch for restricted networks that block QUIC/HTTP3
+const forceHTTP1Fetch = async (url: RequestInfo | URL, options: RequestInit = {}): Promise<Response> => {
   const urlObj = new URL(url.toString());
   
-  // Force all authentication through URL parameters for maximum compatibility
+  // Force API key in URL params for max compatibility
   urlObj.searchParams.set('apikey', SUPABASE_PUBLISHABLE_KEY);
   
-  // Build minimal headers to avoid filtering
+  // Minimal headers to avoid network filtering
   const basicHeaders: Record<string, string> = {
     'apikey': SUPABASE_PUBLISHABLE_KEY,
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    // Force HTTP/1.1 by setting Connection header
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
   };
   
-  // Add any existing headers but keep it minimal
+  // Add existing headers but filter problematic ones
   if (options.headers) {
     const existingHeaders = new Headers(options.headers);
     existingHeaders.forEach((value, key) => {
-      if (!['user-agent', 'referer', 'origin'].includes(key.toLowerCase())) {
+      const lowerKey = key.toLowerCase();
+      if (!['user-agent', 'referer', 'origin', 'sec-fetch-site', 'sec-fetch-mode'].includes(lowerKey)) {
         basicHeaders[key] = value;
       }
     });
@@ -34,22 +38,60 @@ const restrictedNetworkFetch = async (url: RequestInfo | URL, options: RequestIn
     headers: basicHeaders,
     mode: 'cors',
     cache: 'no-cache',
-    credentials: 'omit', // Don't send credentials that might be blocked
+    credentials: 'omit',
+    // Force traditional fetch behavior
+    redirect: 'follow',
+    referrerPolicy: 'no-referrer-when-downgrade',
   };
   
   try {
+    // Try direct fetch first
     const response = await fetch(urlObj.toString(), requestOptions);
     
-    // If we get a network error or CORS error, throw to trigger retry
-    if (!response.ok && (response.status === 0 || response.status >= 500)) {
-      throw new Error(`Network error: ${response.status}`);
+    if (!response.ok && response.status === 0) {
+      throw new Error('CORS or network blocked');
     }
     
     return response;
   } catch (error) {
-    console.warn('Network request failed:', error);
+    console.warn('Direct Supabase request failed, trying proxy fallback:', error);
+    
+    // If direct request fails, try proxy fallback for critical endpoints
+    if (urlObj.pathname.includes('/rest/v1/')) {
+      try {
+        return await tryProxyFallback(url, options);
+      } catch (proxyError) {
+        console.error('Proxy fallback also failed:', proxyError);
+        throw error; // Throw original error
+      }
+    }
+    
     throw error;
   }
+};
+
+// Proxy fallback for critical REST API calls
+const tryProxyFallback = async (url: RequestInfo | URL, options: RequestInit = {}): Promise<Response> => {
+  const urlObj = new URL(url.toString());
+  
+  // Use our edge function as a proxy
+  const proxyUrl = `${SUPABASE_URL}/functions/v1/api-proxy`;
+  
+  const proxyRequest = {
+    method: options.method || 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+    },
+    body: JSON.stringify({
+      endpoint: urlObj.pathname + urlObj.search,
+      method: options.method || 'GET',
+      body: options.body,
+      headers: Object.fromEntries(new Headers(options.headers || {})),
+    }),
+  };
+  
+  return fetch(proxyUrl, proxyRequest);
 };
 
 // Import the supabase client like this:
@@ -57,7 +99,7 @@ const restrictedNetworkFetch = async (url: RequestInfo | URL, options: RequestIn
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   global: {
-    fetch: restrictedNetworkFetch,
+    fetch: forceHTTP1Fetch,
   },
   auth: {
     storage: localStorage,
