@@ -5,10 +5,39 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://woosegomxvbgzelyqvoj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvb3NlZ29teHZiZ3plbHlxdm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2Nzg3OTAsImV4cCI6MjA3NDI1NDc5MH0.htpKQLRZjqwochLN7MBVI8tA5F-AAwktDd5SLq6vUSc";
 
+// Custom fetch function to handle restricted networks (like school firewalls)
+const customFetch = (url: RequestInfo | URL, options: RequestInit = {}) => {
+  const urlObj = new URL(url.toString());
+  
+  // Add API key as URL parameter for networks that strip headers
+  if (!urlObj.searchParams.has('apikey')) {
+    urlObj.searchParams.set('apikey', SUPABASE_PUBLISHABLE_KEY);
+  }
+  
+  // Ensure headers include the API key
+  const headers = new Headers(options.headers);
+  if (!headers.has('apikey')) {
+    headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
+  }
+  
+  // Force HTTP/1.1 to avoid QUIC/HTTP3 issues on restricted networks
+  const modifiedOptions: RequestInit = {
+    ...options,
+    headers,
+    // Add cache-busting to avoid network caching issues
+    cache: 'no-cache',
+  };
+  
+  return fetch(urlObj.toString(), modifiedOptions);
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  global: {
+    fetch: customFetch,
+  },
   auth: {
     storage: localStorage,
     persistSession: true,
