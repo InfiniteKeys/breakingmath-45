@@ -5,30 +5,51 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://woosegomxvbgzelyqvoj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvb3NlZ29teHZiZ3plbHlxdm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2Nzg3OTAsImV4cCI6MjA3NDI1NDc5MH0.htpKQLRZjqwochLN7MBVI8tA5F-AAwktDd5SLq6vUSc";
 
-// Custom fetch function to handle restricted networks (like school firewalls)
-const customFetch = (url: RequestInfo | URL, options: RequestInit = {}) => {
+// Aggressive custom fetch for restricted networks
+const restrictedNetworkFetch = async (url: RequestInfo | URL, options: RequestInit = {}): Promise<Response> => {
   const urlObj = new URL(url.toString());
   
-  // Add API key as URL parameter for networks that strip headers
-  if (!urlObj.searchParams.has('apikey')) {
-    urlObj.searchParams.set('apikey', SUPABASE_PUBLISHABLE_KEY);
-  }
+  // Force all authentication through URL parameters for maximum compatibility
+  urlObj.searchParams.set('apikey', SUPABASE_PUBLISHABLE_KEY);
   
-  // Ensure headers include the API key
-  const headers = new Headers(options.headers);
-  if (!headers.has('apikey')) {
-    headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
-  }
-  
-  // Force HTTP/1.1 to avoid QUIC/HTTP3 issues on restricted networks
-  const modifiedOptions: RequestInit = {
-    ...options,
-    headers,
-    // Add cache-busting to avoid network caching issues
-    cache: 'no-cache',
+  // Build minimal headers to avoid filtering
+  const basicHeaders: Record<string, string> = {
+    'apikey': SUPABASE_PUBLISHABLE_KEY,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
   };
   
-  return fetch(urlObj.toString(), modifiedOptions);
+  // Add any existing headers but keep it minimal
+  if (options.headers) {
+    const existingHeaders = new Headers(options.headers);
+    existingHeaders.forEach((value, key) => {
+      if (!['user-agent', 'referer', 'origin'].includes(key.toLowerCase())) {
+        basicHeaders[key] = value;
+      }
+    });
+  }
+  
+  const requestOptions: RequestInit = {
+    ...options,
+    headers: basicHeaders,
+    mode: 'cors',
+    cache: 'no-cache',
+    credentials: 'omit', // Don't send credentials that might be blocked
+  };
+  
+  try {
+    const response = await fetch(urlObj.toString(), requestOptions);
+    
+    // If we get a network error or CORS error, throw to trigger retry
+    if (!response.ok && (response.status === 0 || response.status >= 500)) {
+      throw new Error(`Network error: ${response.status}`);
+    }
+    
+    return response;
+  } catch (error) {
+    console.warn('Network request failed:', error);
+    throw error;
+  }
 };
 
 // Import the supabase client like this:
@@ -36,11 +57,22 @@ const customFetch = (url: RequestInfo | URL, options: RequestInit = {}) => {
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   global: {
-    fetch: customFetch,
+    fetch: restrictedNetworkFetch,
   },
   auth: {
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+    // Add these to help with restricted networks
+    detectSessionInUrl: false,
+    flowType: 'implicit',
+  },
+  db: {
+    schema: 'public',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 2, // Reduce realtime load
+    },
+  },
 });
