@@ -1,45 +1,43 @@
 import { useState, useEffect } from "react";
 import { Calendar, Clock, MapPin, Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Event {
+  id: string;
+  name: string;
+  description: string | null;
+  date: string;
+  time: string;
+  location: string;
+  participants: string;
+}
 
 const EventsSection = () => {
-  const events = [
-    {
-      id: 1,
-      name: "Regional Math Competition",
-      date: "2026-01-15",
-      time: "9:00 AM",
-      location: "University of Toronto",
-      description: "Annual regional mathematics competition featuring algebra, geometry, and calculus problems.",
-      participants: "All grades welcome"
-    },
-    {
-      id: 2,
-      name: "Pi Day Celebration",
-      date: "2026-03-14",
-      time: "3:14 PM",
-      location: "School Cafeteria",
-      description: "Celebrating the mathematical constant π with games, puzzles, and of course, pie!",
-      participants: "Open to all students"
-    },
-    {
-      id: 3,
-      name: "Math Olympics Training",
-      date: "2026-02-20",
-      time: "3:30 PM",
-      location: "Room 205",
-      description: "Intensive training session preparing for upcoming Math Olympics competition.",
-      participants: "Club members only"
-    },
-    {
-      id: 4,
-      name: "Guest Speaker: Dr. Sarah Mitchell",
-      date: "2026-01-28",
-      time: "12:00 PM",
-      location: "School Auditorium",
-      description: "Renowned mathematician speaking about careers in applied mathematics and data science.",
-      participants: "All students invited"
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching events:', error);
+      } else {
+        setEvents(data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
     const [timeLeft, setTimeLeft] = useState({
@@ -103,8 +101,19 @@ const EventsSection = () => {
           </div>
 
           {/* Events Grid */}
-          <div className="grid lg:grid-cols-2 gap-8">
-            {events.map((event) => (
+          {loading ? (
+            <div className="text-center py-16">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Loading events...</p>
+            </div>
+          ) : events.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-xl text-muted-foreground">No events scheduled at the moment.</p>
+              <p className="text-muted-foreground mt-2">Check back soon for upcoming events!</p>
+            </div>
+          ) : (
+            <div className="grid lg:grid-cols-2 gap-8">
+              {events.map((event) => (
               <div key={event.id} className="event-card">
                 {/* Event Header */}
                 <div className="flex items-start justify-between mb-4">
@@ -149,8 +158,9 @@ const EventsSection = () => {
                   <CountdownTimer targetDate={event.date} />
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Call to Action */}
           <div className="text-center mt-16">
