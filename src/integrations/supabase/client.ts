@@ -56,9 +56,16 @@ const tryProxyFallback = async (url: RequestInfo | URL, options: RequestInit = {
   
   headers.forEach((value, key) => {
     const lowerKey = key.toLowerCase();
-    // Only pass through essential headers
-    if (['authorization', 'content-type', 'prefer'].includes(lowerKey)) {
+    // Only pass through essential headers, but exclude Authorization for public endpoints
+    if (['content-type', 'prefer'].includes(lowerKey)) {
       cleanHeaders[key] = value;
+    }
+    // Only pass Authorization if it's a valid JWT (3 parts separated by dots)
+    if (lowerKey === 'authorization' && value.startsWith('Bearer ')) {
+      const token = value.replace('Bearer ', '');
+      if (token.split('.').length === 3) {
+        cleanHeaders[key] = value;
+      }
     }
   });
   
