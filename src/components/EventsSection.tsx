@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Calendar, Clock, MapPin, Users } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
-
 interface Event {
   id: string;
   name: string;
@@ -11,22 +10,20 @@ interface Event {
   location: string;
   participants: string;
 }
-
 const EventsSection = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     fetchEvents();
   }, []);
-
   const fetchEvents = async () => {
     try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('date', { ascending: true });
-
+      const {
+        data,
+        error
+      } = await supabase.from('events').select('*').order('date', {
+        ascending: true
+      });
       if (error) {
         console.error('Error fetching events:', error);
         // Show user-friendly message for network issues
@@ -47,36 +44,34 @@ const EventsSection = () => {
       setLoading(false);
     }
   };
-
-  const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
+  const CountdownTimer = ({
+    targetDate
+  }: {
+    targetDate: string;
+  }) => {
     const [timeLeft, setTimeLeft] = useState({
       days: 0,
       hours: 0,
       minutes: 0,
       seconds: 0
     });
-
     useEffect(() => {
       const timer = setInterval(() => {
         const now = new Date().getTime();
         const target = new Date(targetDate).getTime();
         const difference = target - now;
-
         if (difference > 0) {
           setTimeLeft({
             days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-            hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-            minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-            seconds: Math.floor((difference % (1000 * 60)) / 1000)
+            hours: Math.floor(difference % (1000 * 60 * 60 * 24) / (1000 * 60 * 60)),
+            minutes: Math.floor(difference % (1000 * 60 * 60) / (1000 * 60)),
+            seconds: Math.floor(difference % (1000 * 60) / 1000)
           });
         }
       }, 1000);
-
       return () => clearInterval(timer);
     }, [targetDate]);
-
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+    return <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
         <div className="countdown-timer">
           <span className="countdown-number">{String(timeLeft.days).padStart(2, '0')}</span>
           <span className="countdown-label">Days</span>
@@ -93,12 +88,9 @@ const EventsSection = () => {
           <span className="countdown-number">{String(timeLeft.seconds).padStart(2, '0')}</span>
           <span className="countdown-label">Sec</span>
         </div>
-      </div>
-    );
+      </div>;
   };
-
-  return (
-    <section id="events" className="py-20 grid-background">
+  return <section id="events" className="py-20 grid-background">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Section Header */}
@@ -110,20 +102,14 @@ const EventsSection = () => {
           </div>
 
           {/* Events Grid */}
-          {loading ? (
-            <div className="text-center py-16">
+          {loading ? <div className="text-center py-16">
               <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
               <p className="mt-4 text-muted-foreground">Loading events...</p>
-            </div>
-          ) : events.length === 0 ? (
-            <div className="text-center py-16">
+            </div> : events.length === 0 ? <div className="text-center py-16">
               <p className="text-xl text-muted-foreground">No events scheduled at the moment.</p>
               <p className="text-muted-foreground mt-2">Check back soon for upcoming events!</p>
-            </div>
-          ) : (
-            <div className="grid lg:grid-cols-2 gap-8">
-              {events.map((event) => (
-              <div key={event.id} className="event-card">
+            </div> : <div className="grid lg:grid-cols-2 gap-8">
+              {events.map(event => <div key={event.id} className="event-card">
                 {/* Event Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -131,20 +117,20 @@ const EventsSection = () => {
                     <div className="flex items-center text-muted-foreground text-sm space-x-4">
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-1" />
-                        {new Date(event.date).toLocaleDateString('en-US', { 
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
+                        {new Date(event.date).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
                       </div>
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-1" />
                         {new Date(`2000-01-01T${event.time}`).toLocaleTimeString('en-US', {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                          hour12: true
-                        })}
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true
+                    })}
                       </div>
                     </div>
                   </div>
@@ -160,11 +146,9 @@ const EventsSection = () => {
                     <Users className="h-4 w-4 mr-2 flex-shrink-0" />
                     <span>{event.participants}</span>
                   </div>
-                  {event.description && (
-                    <p className="text-muted-foreground leading-relaxed">
+                  {event.description && <p className="text-muted-foreground leading-relaxed">
                       {event.description}
-                    </p>
-                  )}
+                    </p>}
                 </div>
 
                 {/* Countdown Timer */}
@@ -172,16 +156,14 @@ const EventsSection = () => {
                   <p className="text-sm font-semibold text-center mb-4 text-primary">⏱️ Time Remaining:</p>
                   <CountdownTimer targetDate={event.date} />
                 </div>
-              </div>
-              ))}
-            </div>
-          )}
+              </div>)}
+            </div>}
 
           {/* Call to Action */}
           <div className="text-center mt-16">
             <div className="bg-gradient-to-r from-primary/20 to-secondary/20 rounded-xl p-8 border border-primary/30 backdrop-blur-sm">
               <h3 className="text-2xl font-bold mb-4 text-primary">Don't Miss Out!</h3>
-              <p className="text-lg mb-6 text-foreground/90">
+              <p className="text-lg mb-6 text-slate-300">
                 Join Breaking Math today and be part of all these amazing events and competitions.
               </p>
               <a href="#join" className="inline-block bg-primary text-primary-foreground px-8 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/25 hover:scale-105">
@@ -191,8 +173,6 @@ const EventsSection = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default EventsSection;
