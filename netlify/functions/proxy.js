@@ -1,4 +1,3 @@
-// netlify/functions/proxy.js
 export async function handler(event, context) {
   // Handle preflight OPTIONS requests (CORS)
   if (event.httpMethod === "OPTIONS") {
