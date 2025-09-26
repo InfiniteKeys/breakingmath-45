@@ -2,7 +2,6 @@ import { Bell, Award, Calendar, Users, Megaphone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
 interface Announcement {
   id: string;
   title: string | null;
@@ -11,83 +10,76 @@ interface Announcement {
   creation_time: string | null;
   created_at: string;
 }
-
 const AnnouncementsSection = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const fetchAnnouncements = async () => {
     try {
-      const { data, error } = await supabase
-        .from('classroom_announcements')
-        .select('id, title, text, creator_name, creation_time, created_at')
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('classroom_announcements').select('id, title, text, creator_name, creation_time, created_at').order('created_at', {
+        ascending: false
+      });
       if (error) {
         console.error('Error fetching announcements:', error);
         toast({
           title: "Error",
           description: "Failed to fetch announcements from database",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-
       setAnnouncements(data || []);
     } catch (error) {
       console.error('Error fetching announcements:', error);
       toast({
-        title: "Error", 
+        title: "Error",
         description: "Failed to fetch announcements",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchAnnouncements();
   }, []);
-
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Unknown date';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric',
+      day: 'numeric'
     });
   };
 
   // Static announcements as fallback when no admin announcements
-  const staticAnnouncements = [
-    {
-      id: 1,
-      type: "success",
-      icon: Award,
-      title: "Congratulations to Our Winners!",
-      date: "December 15, 2023",
-      content: "Sarah Chen and Marcus Johnson placed 1st and 3rd respectively at the Regional Math Competition. Amazing work representing Breaking Math!"
-    },
-    {
-      id: 2,
-      type: "info",
-      icon: Calendar,
-      title: "Winter Break Meeting Schedule",
-      date: "December 10, 2023",
-      content: "Please note that our regular meetings will resume on January 8th, 2024. We'll be sending out competition prep materials during the break."
-    },
-    {
-      id: 3,
-      type: "announcement",
-      icon: Users,
-      title: "New Member Orientation",
-      date: "December 8, 2023",
-      content: "Welcome to all our new members who joined this month! Orientation session will be held next Wednesday at 3:30 PM in Room 205."
-    }
-  ];
-
+  const staticAnnouncements = [{
+    id: 1,
+    type: "success",
+    icon: Award,
+    title: "Congratulations to Our Winners!",
+    date: "December 15, 2023",
+    content: "Sarah Chen and Marcus Johnson placed 1st and 3rd respectively at the Regional Math Competition. Amazing work representing Breaking Math!"
+  }, {
+    id: 2,
+    type: "info",
+    icon: Calendar,
+    title: "Winter Break Meeting Schedule",
+    date: "December 10, 2023",
+    content: "Please note that our regular meetings will resume on January 8th, 2024. We'll be sending out competition prep materials during the break."
+  }, {
+    id: 3,
+    type: "announcement",
+    icon: Users,
+    title: "New Member Orientation",
+    date: "December 8, 2023",
+    content: "Welcome to all our new members who joined this month! Orientation session will be held next Wednesday at 3:30 PM in Room 205."
+  }];
   const getAnnouncementStyle = (type?: string) => {
     switch (type) {
       case "success":
@@ -100,7 +92,6 @@ const AnnouncementsSection = () => {
         return "border-l-4 border-l-primary bg-primary/5";
     }
   };
-
   const getIconColor = (type?: string) => {
     switch (type) {
       case "success":
@@ -113,9 +104,7 @@ const AnnouncementsSection = () => {
         return "text-primary";
     }
   };
-
-  return (
-    <section id="announcements" className="py-20 bg-muted/20">
+  return <section id="announcements" className="py-20 bg-muted/20">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           {/* Section Header */}
@@ -130,14 +119,12 @@ const AnnouncementsSection = () => {
             </p>
           </div>
 
-          {loading ? (
-            <div className="text-center py-12">
+          {loading ? <div className="text-center py-12">
               <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
               <p className="text-muted-foreground">Loading announcements...</p>
-            </div>
-          ) : announcements.length === 0 ? (
-            // Show static announcements when no admin announcements
-            <div className="space-y-6">
+            </div> : announcements.length === 0 ?
+        // Show static announcements when no admin announcements
+        <div className="space-y-6">
               <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
                 <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
                   <Megaphone className="w-5 h-5" />
@@ -148,13 +135,9 @@ const AnnouncementsSection = () => {
                 </p>
               </div>
               
-              {staticAnnouncements.map((announcement) => {
-                const IconComponent = announcement.icon;
-                return (
-                  <div
-                    key={announcement.id}
-                    className={`rounded-lg p-6 ${getAnnouncementStyle(announcement.type)} hover:shadow-md transition-shadow`}
-                  >
+              {staticAnnouncements.map(announcement => {
+            const IconComponent = announcement.icon;
+            return <div key={announcement.id} className={`rounded-lg p-6 ${getAnnouncementStyle(announcement.type)} hover:shadow-md transition-shadow`}>
                     <div className="flex items-start space-x-4">
                       <div className={`flex-shrink-0 ${getIconColor(announcement.type)}`}>
                         <IconComponent className="h-6 w-6" />
@@ -169,18 +152,12 @@ const AnnouncementsSection = () => {
                         </p>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            // Show admin panel announcements
-            <div className="space-y-6">
-              {announcements.map((announcement) => (
-                <div
-                  key={announcement.id}
-                  className={`rounded-lg p-6 ${getAnnouncementStyle()} hover:shadow-md transition-shadow`}
-                >
+                  </div>;
+          })}
+            </div> :
+        // Show admin panel announcements
+        <div className="space-y-6">
+              {announcements.map(announcement => <div key={announcement.id} className={`rounded-lg p-6 ${getAnnouncementStyle()} hover:shadow-md transition-shadow`}>
                   <div className="flex items-start space-x-4">
                     <div className={`flex-shrink-0 ${getIconColor()}`}>
                       <Megaphone className="h-6 w-6" />
@@ -195,49 +172,24 @@ const AnnouncementsSection = () => {
                         </span>
                       </div>
                       <div className="text-muted-foreground leading-relaxed">
-                        {announcement.text ? (
-                          <div dangerouslySetInnerHTML={{ 
-                            __html: announcement.text.replace(/\n/g, '<br />') 
-                          }} />
-                        ) : (
-                          <em>No content</em>
-                        )}
+                        {announcement.text ? <div dangerouslySetInnerHTML={{
+                    __html: announcement.text.replace(/\n/g, '<br />')
+                  }} /> : <em>No content</em>}
                       </div>
-                      {announcement.creator_name && (
-                        <div className="mt-2 text-sm text-muted-foreground">
+                      {announcement.creator_name && <div className="mt-2 text-sm text-muted-foreground">
                           — {announcement.creator_name}
-                        </div>
-                      )}
+                        </div>}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                </div>)}
+            </div>}
 
           {/* Newsletter Signup */}
           <div className="mt-16 text-center">
-            <div className="bg-gradient-to-r from-primary to-secondary rounded-xl p-8 text-white">
-              <h3 className="text-2xl font-bold mb-4">Stay Informed</h3>
-              <p className="text-lg mb-6 opacity-90">
-                Get the latest announcements and updates delivered directly to your email.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 px-4 py-3 rounded-lg text-gray-900 placeholder-gray-500"
-                />
-                <button className="bg-white text-primary px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                  Subscribe
-                </button>
-              </div>
-            </div>
+            
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default AnnouncementsSection;
