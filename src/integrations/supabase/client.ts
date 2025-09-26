@@ -70,18 +70,17 @@ const forceHTTP1Fetch = async (url: RequestInfo | URL, options: RequestInit = {}
   }
 };
 
-// Proxy fallback for critical REST API calls
+// Proxy fallback using Netlify function for PDSB WiFi compatibility
 const tryProxyFallback = async (url: RequestInfo | URL, options: RequestInit = {}): Promise<Response> => {
   const urlObj = new URL(url.toString());
   
-  // Use our edge function as a proxy
-  const proxyUrl = `${SUPABASE_URL}/functions/v1/api-proxy`;
+  // Use our Netlify function as a proxy
+  const proxyUrl = 'https://breakingmath.club/.netlify/functions/proxy';
   
   const proxyRequest = {
-    method: options.method || 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
     },
     body: JSON.stringify({
       endpoint: urlObj.pathname + urlObj.search,

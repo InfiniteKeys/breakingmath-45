@@ -1,11 +1,4 @@
 // netlify/functions/proxy.js
-import { createClient } from "@supabase/supabase-js"
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-)
-
 export async function handler(event, context) {
   // Handle preflight OPTIONS requests (CORS)
   if (event.httpMethod === "OPTIONS") {
@@ -13,38 +6,61 @@ export async function handler(event, context) {
       statusCode: 204,
       headers: {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
       },
       body: "",
     }
   }
 
   try {
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-      .order("date", { ascending: true })
+    // Parse the request body to get the Supabase request details
+    const requestBody = event.body ? JSON.parse(event.body) : {};
+    const { endpoint, method = 'GET', body: supabaseBody, headers: supabaseHeaders = {} } = requestBody;
 
-    if (error) {
+    if (!endpoint) {
       return {
-        statusCode: 500,
+        statusCode: 400,
         headers: {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Headers": "Content-Type",
         },
-        body: JSON.stringify({ error: error.message }),
+        body: JSON.stringify({ error: "Missing endpoint parameter" }),
       }
     }
 
+    // Build the full Supabase URL
+    const supabaseUrl = `${process.env.SUPABASE_URL}${endpoint}`;
+
+    // Prepare headers for Supabase request
+    const fetchHeaders = {
+      'Content-Type': 'application/json',
+      'apikey': process.env.SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+      ...supabaseHeaders
+    };
+
+    // Make the request to Supabase
+    const fetchOptions = {
+      method: method,
+      headers: fetchHeaders,
+    };
+
+    if (supabaseBody && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+      fetchOptions.body = typeof supabaseBody === 'string' ? supabaseBody : JSON.stringify(supabaseBody);
+    }
+
+    const response = await fetch(supabaseUrl, fetchOptions);
+    const data = await response.text();
+
     return {
-      statusCode: 200,
+      statusCode: response.status,
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
       },
-      body: JSON.stringify(data), // ✅ Must be a JSON string
+      body: data,
     }
   } catch (err) {
     return {
