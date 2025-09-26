@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 interface UserProfile {
   user_id: string;
   display_name: string | null;
+  full_name: string | null;
   email: string;
   roles: string[];
 }
@@ -51,7 +52,7 @@ export const UserManagement = () => {
       // Fetch profiles with user roles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, display_name');
+        .select('user_id, display_name, full_name');
 
       if (profilesError) {
         console.error('Profiles error:', profilesError);
@@ -74,6 +75,7 @@ export const UserManagement = () => {
         userMap.set(profile.user_id, {
           user_id: profile.user_id,
           display_name: profile.display_name,
+          full_name: profile.full_name,
           email: profile.user_id, // We'll display user_id for now since we can't access auth.users
           roles: [],
           isOverseer: false,
@@ -95,6 +97,7 @@ export const UserManagement = () => {
           userMap.set(role.user_id, {
             user_id: role.user_id,
             display_name: null,
+            full_name: null,
             email: role.user_id, // We'll display user_id for now since we can't access auth.users
             roles: [role.role],
             isOverseer: role.role === 'overseer',
@@ -117,35 +120,13 @@ export const UserManagement = () => {
     }
   };
 
+  // Remove display name editing functionality since profiles are now read-only
   const updateDisplayName = async (userId: string) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          user_id: userId,
-          display_name: newDisplayName
-        }, {
-          onConflict: 'user_id'
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Display name updated successfully",
-      });
-
-      setEditingProfile(null);
-      setNewDisplayName('');
-      fetchUsers();
-    } catch (error) {
-      console.error('Error updating display name:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update display name",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Not Available",
+      description: "Profile editing has been disabled. User information is set during registration.",
+      variant: "destructive",
+    });
   };
 
   const updateUserRole = async (userId: string, action: 'add' | 'remove', role: 'admin' | 'user' | 'overseer' | 'editor') => {
@@ -254,18 +235,8 @@ export const UserManagement = () => {
                     ) : (
                       <div className="flex items-center gap-2">
                         <p className="font-medium">
-                          {user.display_name || 'No name set'}
+                          {user.full_name || user.display_name || 'No name set'}
                         </p>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setEditingProfile(user.user_id);
-                            setNewDisplayName(user.display_name || '');
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
                       </div>
                     )}
                     <p className="text-xs text-muted-foreground">
