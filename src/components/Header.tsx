@@ -60,11 +60,8 @@ const Header = () => {
                 </Button>
               </Link>}
             
-            {!user && <Link to="/admins">
-                <Button variant="outline" size="sm">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Admin Login
-                </Button>
+            {!user && <Link to="/auth">
+                <Button variant="outline" size="sm" className="px-[40px]">Join</Button>
               </Link>}
             
             <ThemeToggle />
@@ -90,8 +87,8 @@ const Header = () => {
               {isAdmin && <Link to="/admin" className="text-foreground hover:text-primary transition-colors font-medium py-2" onClick={() => setIsMenuOpen(false)}>
                   Admin Panel
                 </Link>}
-              {!user && <Link to="/admins" className="text-foreground hover:text-primary transition-colors font-medium py-2" onClick={() => setIsMenuOpen(false)}>
-                  Admin Login
+              {!user && <Link to="/auth" className="text-foreground hover:text-primary transition-colors font-medium py-2" onClick={() => setIsMenuOpen(false)}>
+                  Sign In
                 </Link>}
             </div>
           </nav>}
