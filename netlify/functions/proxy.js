@@ -35,15 +35,20 @@ export async function handler(event, context) {
     const fetchHeaders = {
       'Content-Type': 'application/json',
       'apikey': process.env.SUPABASE_ANON_KEY,
-      ...supabaseHeaders
     };
 
-    // Only add Authorization header if one was provided in the original request
-    if (supabaseHeaders.Authorization) {
-      fetchHeaders.Authorization = supabaseHeaders.Authorization;
-    } else if (supabaseHeaders.authorization) {
-      fetchHeaders.Authorization = supabaseHeaders.authorization;
+    // Only add Authorization header if one was provided and is properly formatted
+    const authHeader = supabaseHeaders.Authorization || supabaseHeaders.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ') && authHeader.split('.').length === 3) {
+      fetchHeaders.Authorization = authHeader;
     }
+
+    // Add other non-auth headers
+    Object.keys(supabaseHeaders).forEach(key => {
+      if (key.toLowerCase() !== 'authorization' && key.toLowerCase() !== 'content-type' && key.toLowerCase() !== 'apikey') {
+        fetchHeaders[key] = supabaseHeaders[key];
+      }
+    });
 
     // Make the request to Supabase
     const fetchOptions = {

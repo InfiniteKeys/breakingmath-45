@@ -50,6 +50,18 @@ const tryProxyFallback = async (url: RequestInfo | URL, options: RequestInit = {
   // Use our Netlify function as a proxy
   const proxyUrl = 'https://breakingmath.club/.netlify/functions/proxy';
   
+  // Extract headers and filter out problematic ones
+  const headers = new Headers(options.headers || {});
+  const cleanHeaders: Record<string, string> = {};
+  
+  headers.forEach((value, key) => {
+    const lowerKey = key.toLowerCase();
+    // Only pass through essential headers
+    if (['authorization', 'content-type', 'prefer'].includes(lowerKey)) {
+      cleanHeaders[key] = value;
+    }
+  });
+  
   const proxyRequest = {
     method: 'POST',
     headers: {
@@ -59,7 +71,7 @@ const tryProxyFallback = async (url: RequestInfo | URL, options: RequestInit = {
       endpoint: urlObj.pathname + urlObj.search,
       method: options.method || 'GET',
       body: options.body,
-      headers: Object.fromEntries(new Headers(options.headers || {})),
+      headers: cleanHeaders,
     }),
   };
   
