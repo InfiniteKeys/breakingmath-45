@@ -5,21 +5,20 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://woosegomxvbgzelyqvoj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvb3NlZ29teHZiZ3plbHlxdm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2Nzg3OTAsImV4cCI6MjA3NDI1NDc5MH0.htpKQLRZjqwochLN7MBVI8tA5F-AAwktDd5SLq6vUSc";
 
-// Force HTTP/1.1 fetch for restricted networks that block QUIC/HTTP3
-const forceHTTP1Fetch = async (url: RequestInfo | URL, options: RequestInit = {}): Promise<Response> => {
+// Proxy-first fetch for PDSB WiFi compatibility
+const proxyFirstFetch = async (url: RequestInfo | URL, options: RequestInit = {}): Promise<Response> => {
   const urlObj = new URL(url.toString());
   
-  // Force API key in URL params for max compatibility
-  urlObj.searchParams.set('apikey', SUPABASE_PUBLISHABLE_KEY);
+  // Use proxy for ALL REST API and auth requests to bypass PDSB WiFi blocking
+  if (urlObj.pathname.includes('/rest/v1/') || urlObj.pathname.includes('/auth/v1/')) {
+    return await tryProxyFallback(url, options);
+  }
   
-  // Minimal headers to avoid network filtering
+  // For other requests (like realtime), try direct first with minimal headers
   const basicHeaders: Record<string, string> = {
     'apikey': SUPABASE_PUBLISHABLE_KEY,
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    // Force HTTP/1.1 by setting Connection header
-    'Connection': 'keep-alive',
-    'Upgrade-Insecure-Requests': '1',
   };
   
   // Add existing headers but filter problematic ones
@@ -39,35 +38,9 @@ const forceHTTP1Fetch = async (url: RequestInfo | URL, options: RequestInit = {}
     mode: 'cors',
     cache: 'no-cache',
     credentials: 'omit',
-    // Force traditional fetch behavior
-    redirect: 'follow',
-    referrerPolicy: 'no-referrer-when-downgrade',
   };
   
-  try {
-    // Try direct fetch first
-    const response = await fetch(urlObj.toString(), requestOptions);
-    
-    if (!response.ok && response.status === 0) {
-      throw new Error('CORS or network blocked');
-    }
-    
-    return response;
-  } catch (error) {
-    console.warn('Direct Supabase request failed, trying proxy fallback:', error);
-    
-    // If direct request fails, try proxy fallback for critical endpoints
-    if (urlObj.pathname.includes('/rest/v1/')) {
-      try {
-        return await tryProxyFallback(url, options);
-      } catch (proxyError) {
-        console.error('Proxy fallback also failed:', proxyError);
-        throw error; // Throw original error
-      }
-    }
-    
-    throw error;
-  }
+  return fetch(urlObj.toString(), requestOptions);
 };
 
 // Proxy fallback using Netlify function for PDSB WiFi compatibility
@@ -98,7 +71,7 @@ const tryProxyFallback = async (url: RequestInfo | URL, options: RequestInit = {
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   global: {
-    fetch: forceHTTP1Fetch,
+    fetch: proxyFirstFetch,
   },
   auth: {
     storage: localStorage,

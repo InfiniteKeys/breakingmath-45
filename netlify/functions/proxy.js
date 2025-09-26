@@ -35,9 +35,15 @@ export async function handler(event, context) {
     const fetchHeaders = {
       'Content-Type': 'application/json',
       'apikey': process.env.SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
       ...supabaseHeaders
     };
+
+    // Only add Authorization header if one was provided in the original request
+    if (supabaseHeaders.Authorization) {
+      fetchHeaders.Authorization = supabaseHeaders.Authorization;
+    } else if (supabaseHeaders.authorization) {
+      fetchHeaders.Authorization = supabaseHeaders.authorization;
+    }
 
     // Make the request to Supabase
     const fetchOptions = {
