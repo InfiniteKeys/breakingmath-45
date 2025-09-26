@@ -1,39 +1,28 @@
-import { Bell, Award, Calendar, Users, RefreshCw, Megaphone } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Bell, Award, Calendar, Users, Megaphone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface ClassroomAnnouncement {
+interface Announcement {
   id: string;
-  classroom_id: string;
-  announcement_id: string;
   title: string | null;
   text: string | null;
   creator_name: string | null;
   creation_time: string | null;
-  update_time: string | null;
-  attachments: any;
   created_at: string;
-  updated_at: string;
 }
 
 const AnnouncementsSection = () => {
-  const [announcements, setAnnouncements] = useState<ClassroomAnnouncement[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const { toast } = useToast();
-
-  // Replace this with your actual Google Classroom Course ID
-  const COURSE_ID = "your-course-id-here";
 
   const fetchAnnouncements = async () => {
     try {
       const { data, error } = await supabase
         .from('classroom_announcements')
-        .select('*')
-        .order('creation_time', { ascending: false });
+        .select('id, title, text, creator_name, creation_time, created_at')
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching announcements:', error);
@@ -46,7 +35,6 @@ const AnnouncementsSection = () => {
       }
 
       setAnnouncements(data || []);
-      setLastUpdated(new Date());
     } catch (error) {
       console.error('Error fetching announcements:', error);
       toast({
@@ -56,51 +44,6 @@ const AnnouncementsSection = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const refreshFromClassroom = async () => {
-    if (!COURSE_ID || COURSE_ID === "your-course-id-here") {
-      toast({
-        title: "Configuration Required",
-        description: "Please set your Google Classroom Course ID in the component",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setRefreshing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('fetch-classroom-announcements', {
-        body: { courseId: COURSE_ID },
-      });
-
-      if (error) {
-        console.error('Error calling edge function:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch announcements from Google Classroom",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Success",
-        description: `${data.count} announcements synced from Google Classroom`,
-      });
-
-      // Refresh the local data
-      fetchAnnouncements();
-    } catch (error) {
-      console.error('Error refreshing from classroom:', error);
-      toast({
-        title: "Error",
-        description: "Failed to refresh announcements",
-        variant: "destructive",
-      });
-    } finally {
-      setRefreshing(false);
     }
   };
 
@@ -117,7 +60,7 @@ const AnnouncementsSection = () => {
     });
   };
 
-  // Static announcements as fallback when no classroom data
+  // Static announcements as fallback when no admin announcements
   const staticAnnouncements = [
     {
       id: 1,
@@ -181,30 +124,10 @@ const AnnouncementsSection = () => {
               <Bell className="h-4 w-4" />
               <span className="text-sm font-medium">Latest Updates</span>
             </div>
-            <div className="flex items-center justify-center gap-4 mb-6">
-              <h2 className="text-4xl md:text-5xl font-bold">Announcements</h2>
-              <Button 
-                onClick={refreshFromClassroom}
-                disabled={refreshing || COURSE_ID === "your-course-id-here"}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                {refreshing ? 'Syncing...' : 'Sync from Classroom'}
-              </Button>
-            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">Announcements</h2>
             <p className="text-xl text-muted-foreground">
-              {announcements.length > 0 
-                ? "Latest announcements from Google Classroom" 
-                : "Stay up to date with the latest news, achievements, and important information from Breaking Math."
-              }
+              Stay up to date with the latest news, achievements, and important information from Breaking Math.
             </p>
-            {lastUpdated && announcements.length > 0 && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Last synced: {lastUpdated.toLocaleTimeString()}
-              </p>
-            )}
           </div>
 
           {loading ? (
@@ -213,19 +136,17 @@ const AnnouncementsSection = () => {
               <p className="text-muted-foreground">Loading announcements...</p>
             </div>
           ) : announcements.length === 0 ? (
-            // Show static announcements when no classroom data
+            // Show static announcements when no admin announcements
             <div className="space-y-6">
-              {COURSE_ID === "your-course-id-here" && (
-                <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                  <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
-                    <Megaphone className="w-5 h-5" />
-                    <span className="font-medium">Google Classroom Integration Ready</span>
-                  </div>
-                  <p className="text-sm text-blue-700 dark:text-blue-300 mt-2">
-                    Update the COURSE_ID variable in AnnouncementsSection.tsx with your Google Classroom Course ID to start syncing announcements automatically.
-                  </p>
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                  <Megaphone className="w-5 h-5" />
+                  <span className="font-medium">No announcements yet</span>
                 </div>
-              )}
+                <p className="text-sm text-blue-700 dark:text-blue-300 mt-2">
+                  Administrators can create announcements through the admin panel. Here are some example announcements:
+                </p>
+              </div>
               
               {staticAnnouncements.map((announcement) => {
                 const IconComponent = announcement.icon;
@@ -253,7 +174,7 @@ const AnnouncementsSection = () => {
               })}
             </div>
           ) : (
-            // Show Google Classroom announcements
+            // Show admin panel announcements
             <div className="space-y-6">
               {announcements.map((announcement) => (
                 <div
@@ -267,10 +188,10 @@ const AnnouncementsSection = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="text-lg font-semibold">
-                          {announcement.creator_name || 'Teacher Announcement'}
+                          {announcement.title || 'Announcement'}
                         </h3>
                         <span className="text-sm text-muted-foreground">
-                          {formatDate(announcement.creation_time)}
+                          {formatDate(announcement.creation_time || announcement.created_at)}
                         </span>
                       </div>
                       <div className="text-muted-foreground leading-relaxed">
@@ -282,16 +203,9 @@ const AnnouncementsSection = () => {
                           <em>No content</em>
                         )}
                       </div>
-                      {announcement.attachments && Array.isArray(announcement.attachments) && announcement.attachments.length > 0 && (
-                        <div className="mt-4 p-3 bg-muted/50 rounded-md">
-                          <p className="text-sm font-medium mb-2">Attachments:</p>
-                          <div className="space-y-1">
-                            {announcement.attachments.map((attachment: any, index: number) => (
-                              <div key={index} className="text-sm text-primary hover:underline">
-                                {attachment.link?.title || attachment.driveFile?.title || `Attachment ${index + 1}`}
-                              </div>
-                            ))}
-                          </div>
+                      {announcement.creator_name && (
+                        <div className="mt-2 text-sm text-muted-foreground">
+                          — {announcement.creator_name}
                         </div>
                       )}
                     </div>
