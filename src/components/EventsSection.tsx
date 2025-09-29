@@ -31,10 +31,21 @@ const EventsSection = () => {
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setEvents(data || []);
+        const text = await response.text();
+        console.log('Proxy response:', text);
+        
+        try {
+          const data = JSON.parse(text);
+          setEvents(data || []);
+        } catch (parseError) {
+          console.error('Failed to parse JSON response:', parseError);
+          console.error('Response text:', text);
+          setEvents([]);
+        }
       } else {
         console.error('Error fetching events via proxy:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
         setEvents([]);
       }
     } catch (error) {
