@@ -4,34 +4,6 @@ import type { Database } from './types';
 
 const SUPABASE_URL = "https://woosegomxvbgzelyqvoj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvb3NlZ29teHZiZ3plbHlxdm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2Nzg3OTAsImV4cCI6MjA3NDI1NDc5MH0.htpKQLRZjqwochLN7MBVI8tA5F-AAwktDd5SLq6vUSc";
-const PROXY_URL = "https://breakingmath.club/.netlify/functions/proxy";
-
-// Custom fetch function that routes all requests through the Netlify proxy
-const proxyFetch = async (url: string, options: RequestInit = {}) => {
-  // Extract the path from the Supabase URL
-  const supabaseUrl = new URL(url);
-  const endpoint = supabaseUrl.pathname + supabaseUrl.search;
-  
-  // Prepare the request body for the proxy
-  const proxyBody = {
-    endpoint,
-    method: options.method || 'GET',
-    body: options.body,
-    headers: options.headers || {}
-  };
-
-  // Make the request through the proxy
-  const response = await fetch(PROXY_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(proxyBody)
-  });
-
-  // Return the response with the same interface as the original fetch
-  return response;
-};
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -41,8 +13,5 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  },
-  global: {
-    fetch: proxyFetch,
   }
 });
