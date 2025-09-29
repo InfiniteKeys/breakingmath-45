@@ -4,6 +4,60 @@ import type { Database } from './types';
 
 const SUPABASE_URL = "https://woosegomxvbgzelyqvoj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvb3NlZ29teHZiZ3plbHlxdm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2Nzg3OTAsImV4cCI6MjA3NDI1NDc5MH0.htpKQLRZjqwochLN7MBVI8tA5F-AAwktDd5SLq6vUSc";
+const PROXY_URL = "https://breakingmath.club/.netlify/functions/proxy";
+
+// Custom fetch function that routes all requests through the Netlify proxy
+const proxyFetch = async (url: string, options: RequestInit = {}) => {
+  try {
+    console.log('Proxying request to:', url);
+    
+    // Extract the path from the Supabase URL
+    const supabaseUrl = new URL(url);
+    const endpoint = supabaseUrl.pathname + supabaseUrl.search;
+    
+    console.log('Extracted endpoint:', endpoint);
+    
+    // Prepare the request body for the proxy
+    const proxyBody = {
+      endpoint,
+      method: options.method || 'GET',
+      body: options.body,
+      headers: options.headers || {}
+    };
+
+    console.log('Proxy request body:', JSON.stringify(proxyBody, null, 2));
+
+    // Make the request through the proxy
+    const response = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(proxyBody)
+    });
+
+    console.log('Proxy response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Proxy error response:', errorText);
+      throw new Error(`Proxy request failed: ${response.status}`);
+    }
+
+    const responseText = await response.text();
+    console.log('Proxy response text:', responseText.substring(0, 200));
+    
+    // Create a new response with the same data for Supabase client consumption
+    return new Response(responseText, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers
+    });
+  } catch (error) {
+    console.error('Proxy fetch error:', error);
+    throw error;
+  }
+};
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -13,5 +67,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+  },
+  global: {
+    fetch: proxyFetch,
   }
 });

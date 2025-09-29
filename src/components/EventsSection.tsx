@@ -18,24 +18,17 @@ const EventsSection = () => {
   }, []);
   const fetchEvents = async () => {
     try {
-      // Use the proxy to avoid CORS issues
-      const response = await fetch('/.netlify/functions/proxy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          endpoint: '/rest/v1/public_events?select=*&order=date.asc',
-          method: 'GET'
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setEvents(data || []);
-      } else {
-        console.error('Error fetching events via proxy:', response.status);
+      // Use the Supabase client which is now configured to use the proxy
+      const { data, error } = await supabase
+        .from('public_events')
+        .select('*')
+        .order('date', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching events:', error);
         setEvents([]);
+      } else {
+        setEvents(data || []);
       }
     } catch (error) {
       console.error('Error fetching events:', error);

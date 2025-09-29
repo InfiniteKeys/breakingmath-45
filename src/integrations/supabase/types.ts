@@ -127,25 +127,58 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accessibility_needs: string | null
+          agreed_to_rules: boolean | null
+          available_thursdays: boolean | null
           created_at: string
-          full_name: string
+          display_name: string | null
+          full_name: string | null
+          grade: string | null
           id: string
+          interested_competitions: string[] | null
+          interested_interschool: boolean | null
+          preferred_prizes: string[] | null
+          previous_experience: string | null
+          recent_math_grade: string | null
           updated_at: string
           user_id: string
+          why_join_club: string | null
         }
         Insert: {
+          accessibility_needs?: string | null
+          agreed_to_rules?: boolean | null
+          available_thursdays?: boolean | null
           created_at?: string
-          full_name: string
+          display_name?: string | null
+          full_name?: string | null
+          grade?: string | null
           id?: string
+          interested_competitions?: string[] | null
+          interested_interschool?: boolean | null
+          preferred_prizes?: string[] | null
+          previous_experience?: string | null
+          recent_math_grade?: string | null
           updated_at?: string
           user_id: string
+          why_join_club?: string | null
         }
         Update: {
+          accessibility_needs?: string | null
+          agreed_to_rules?: boolean | null
+          available_thursdays?: boolean | null
           created_at?: string
-          full_name?: string
+          display_name?: string | null
+          full_name?: string | null
+          grade?: string | null
           id?: string
+          interested_competitions?: string[] | null
+          interested_interschool?: boolean | null
+          preferred_prizes?: string[] | null
+          previous_experience?: string | null
+          recent_math_grade?: string | null
           updated_at?: string
           user_id?: string
+          why_join_club?: string | null
         }
         Relationships: []
       }

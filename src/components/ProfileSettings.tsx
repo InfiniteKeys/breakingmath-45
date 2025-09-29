@@ -9,13 +9,13 @@ import { User } from 'lucide-react';
 interface ProfileData {
   display_name: string | null;
   full_name: string | null;
-  grade: number | null;
+  grade: string | null;
   why_join_club: string | null;
   available_thursdays: boolean | null;
-  interested_competitions: boolean | null;
+  interested_competitions: string[] | null;
   accessibility_needs: string | null;
-  interested_interschool: string | null;
-  preferred_prizes: string | null;
+  interested_interschool: boolean | null;
+  preferred_prizes: string[] | null;
   previous_experience: string | null;
   recent_math_grade: string | null;
   agreed_to_rules: boolean | null;
@@ -146,7 +146,7 @@ export const ProfileSettings = () => {
               <div className="space-y-2">
                 <Label>Interested in competitions?</Label>
                 <Input 
-                  value={profile.interested_competitions === null ? 'Not set' : (profile.interested_competitions ? 'Yes' : 'No')} 
+                  value={profile.interested_competitions === null ? 'Not set' : (profile.interested_competitions ? profile.interested_competitions.join(', ') : 'None')} 
                   disabled 
                   className="bg-muted" 
                 />
@@ -163,7 +163,7 @@ export const ProfileSettings = () => {
             <div className="space-y-2">
               <Label>Interested in inter-school activities?</Label>
               <Input 
-                value={profile.interested_interschool || 'Not set'} 
+                value={profile.interested_interschool === null ? 'Not set' : (profile.interested_interschool ? 'Yes' : 'No')} 
                 disabled 
                 className="bg-muted" 
               />
@@ -179,7 +179,7 @@ export const ProfileSettings = () => {
             <div className="space-y-2">
               <Label>Preferred prizes</Label>
               <textarea 
-                value={profile.preferred_prizes || 'Not specified'} 
+                value={profile.preferred_prizes === null ? 'Not specified' : (profile.preferred_prizes ? profile.preferred_prizes.join(', ') : 'None')} 
                 disabled 
                 className="w-full p-2 border border-input rounded-md bg-muted min-h-[60px]"
               />
