@@ -133,11 +133,11 @@ export type Database = {
           created_at: string
           display_name: string | null
           full_name: string
-          grade: string | null
+          grade: number | null
           id: string
-          interested_competitions: string[] | null
-          interested_interschool: boolean | null
-          preferred_prizes: string[] | null
+          interested_competitions: boolean | null
+          interested_interschool: string | null
+          preferred_prizes: string | null
           previous_experience: string | null
           recent_math_grade: string | null
           updated_at: string
@@ -151,11 +151,11 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           full_name: string
-          grade?: string | null
+          grade?: number | null
           id?: string
-          interested_competitions?: string[] | null
-          interested_interschool?: boolean | null
-          preferred_prizes?: string[] | null
+          interested_competitions?: boolean | null
+          interested_interschool?: string | null
+          preferred_prizes?: string | null
           previous_experience?: string | null
           recent_math_grade?: string | null
           updated_at?: string
@@ -169,11 +169,11 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           full_name?: string
-          grade?: string | null
+          grade?: number | null
           id?: string
-          interested_competitions?: string[] | null
-          interested_interschool?: boolean | null
-          preferred_prizes?: string[] | null
+          interested_competitions?: boolean | null
+          interested_interschool?: string | null
+          preferred_prizes?: string | null
           previous_experience?: string | null
           recent_math_grade?: string | null
           updated_at?: string
