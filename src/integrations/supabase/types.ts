@@ -56,6 +56,36 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          name: string
+          student_number: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          name: string
+          student_number: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          name?: string
+          student_number?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string
@@ -178,7 +208,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_events: {
+        Row: {
+          created_at: string | null
+          date: string | null
+          description: string | null
+          id: string | null
+          location: string | null
+          name: string | null
+          participants: string | null
+          time: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          id?: string | null
+          location?: string | null
+          name?: string | null
+          participants?: string | null
+          time?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          id?: string | null
+          location?: string | null
+          name?: string | null
+          participants?: string | null
+          time?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_display_name: {

@@ -21,7 +21,7 @@ const EventsSection = () => {
       const {
         data,
         error
-      } = await supabase.from('events').select('*').order('date', {
+      } = await supabase.from('public_events').select('*').order('date', {
         ascending: true
       });
       if (error) {
@@ -90,7 +90,7 @@ const EventsSection = () => {
         </div>
       </div>;
   };
-  return <section id="events" className="py-20 grid-background">
+  return <section id="events" className="py-20">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Section Header */}
@@ -161,15 +161,7 @@ const EventsSection = () => {
 
           {/* Call to Action */}
           <div className="text-center mt-16">
-            <div className="bg-gradient-to-r from-primary/20 to-secondary/20 rounded-xl p-8 border border-primary/30 backdrop-blur-sm">
-              <h3 className="text-2xl font-bold mb-4 text-primary">Don't Miss Out!</h3>
-              <p className="text-lg mb-6 text-slate-300">
-                Join Breaking Math today and be part of all these amazing events and competitions.
-              </p>
-              <a href="#join" className="inline-block bg-primary text-primary-foreground px-8 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/25 hover:scale-105">
-                Join Now
-              </a>
-            </div>
+            
           </div>
         </div>
       </div>

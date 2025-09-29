@@ -1,4 +1,45 @@
 export async function handler(event, context) {
+  const path = event.path.replace('/.netlify/functions/proxy', '');
+  
+  // Handle contact form submission
+  if (path === '/api/submit-contact' && event.httpMethod === 'POST') {
+    try {
+      const supabaseUrl = 'https://woosegomxvbgzelyqvoj.supabase.co';
+      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/submit-contact`;
+      
+      const response = await fetch(edgeFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvb3NlZ29teHZiZ3plbHlxdm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2Nzg3OTAsImV4cCI6MjA3NDI1NDc5MH0.htpKQLRZjqwochLN7MBVI8tA5F-AAwktDd5SLq6vUSc'}`
+        },
+        body: event.body
+      });
+      
+      const data = await response.text();
+      
+      return {
+        statusCode: response.status,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        },
+        body: data
+      };
+    } catch (error) {
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ error: 'Internal server error' })
+      };
+    }
+  }
+
   // Handle preflight OPTIONS requests (CORS)
   if (event.httpMethod === "OPTIONS") {
     return {

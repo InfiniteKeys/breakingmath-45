@@ -5,107 +5,13 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://woosegomxvbgzelyqvoj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvb3NlZ29teHZiZ3plbHlxdm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2Nzg3OTAsImV4cCI6MjA3NDI1NDc5MH0.htpKQLRZjqwochLN7MBVI8tA5F-AAwktDd5SLq6vUSc";
 
-// Proxy-first fetch for PDSB WiFi compatibility
-const proxyFirstFetch = async (url: RequestInfo | URL, options: RequestInit = {}): Promise<Response> => {
-  const urlObj = new URL(url.toString());
-  
-  // Use proxy for ALL REST API and auth requests to bypass PDSB WiFi blocking
-  if (urlObj.pathname.includes('/rest/v1/') || urlObj.pathname.includes('/auth/v1/')) {
-    return await tryProxyFallback(url, options);
-  }
-  
-  // For other requests (like realtime), try direct first with minimal headers
-  const basicHeaders: Record<string, string> = {
-    'apikey': SUPABASE_PUBLISHABLE_KEY,
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
-  
-  // Add existing headers but filter problematic ones
-  if (options.headers) {
-    const existingHeaders = new Headers(options.headers);
-    existingHeaders.forEach((value, key) => {
-      const lowerKey = key.toLowerCase();
-      if (!['user-agent', 'referer', 'origin', 'sec-fetch-site', 'sec-fetch-mode'].includes(lowerKey)) {
-        basicHeaders[key] = value;
-      }
-    });
-  }
-  
-  const requestOptions: RequestInit = {
-    ...options,
-    headers: basicHeaders,
-    mode: 'cors',
-    cache: 'no-cache',
-    credentials: 'omit',
-  };
-  
-  return fetch(urlObj.toString(), requestOptions);
-};
-
-// Proxy fallback using Netlify function for PDSB WiFi compatibility
-const tryProxyFallback = async (url: RequestInfo | URL, options: RequestInit = {}): Promise<Response> => {
-  const urlObj = new URL(url.toString());
-  
-  // Use our Netlify function as a proxy
-  const proxyUrl = 'https://breakingmath.club/.netlify/functions/proxy';
-  
-  // Extract headers and filter out problematic ones
-  const headers = new Headers(options.headers || {});
-  const cleanHeaders: Record<string, string> = {};
-  
-  headers.forEach((value, key) => {
-    const lowerKey = key.toLowerCase();
-    // Only pass through essential headers, but exclude Authorization for public endpoints
-    if (['content-type', 'prefer'].includes(lowerKey)) {
-      cleanHeaders[key] = value;
-    }
-    // Only pass Authorization if it's a valid JWT (3 parts separated by dots)
-    if (lowerKey === 'authorization' && value.startsWith('Bearer ')) {
-      const token = value.replace('Bearer ', '');
-      if (token.split('.').length === 3) {
-        cleanHeaders[key] = value;
-      }
-    }
-  });
-  
-  const proxyRequest = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      endpoint: urlObj.pathname + urlObj.search,
-      method: options.method || 'GET',
-      body: options.body,
-      headers: cleanHeaders,
-    }),
-  };
-  
-  return fetch(proxyUrl, proxyRequest);
-};
-
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  global: {
-    fetch: proxyFirstFetch,
-  },
   auth: {
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-    // Add these to help with restricted networks
-    detectSessionInUrl: false,
-    flowType: 'implicit',
-  },
-  db: {
-    schema: 'public',
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 2, // Reduce realtime load
-    },
-  },
+  }
 });

@@ -103,22 +103,22 @@ export const ProfileSettings = () => {
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Full Name</Label>
-                <Input value={profile.full_name || 'Not set'} disabled className="bg-muted" />
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input value={profile.full_name || 'Not set'} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input value={user?.email || ''} disabled className="bg-muted" />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input value={user?.email || ''} disabled className="bg-muted" />
+                <Label>Grade</Label>
+                <Input value={profile.grade ? `Grade ${profile.grade}` : 'Not set'} disabled className="bg-muted" />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Grade</Label>
-              <Input value={profile.grade ? `Grade ${profile.grade}` : 'Not set'} disabled className="bg-muted" />
-            </div>
-          </CardContent>
+            </CardContent>
         </Card>
 
         <Card>
@@ -134,7 +134,7 @@ export const ProfileSettings = () => {
                 className="w-full p-2 border border-input rounded-md bg-muted min-h-[80px]"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Available Thursdays at lunch?</Label>
                 <Input 

@@ -179,7 +179,7 @@ export const EventManagement = () => {
       {/* Create/Edit Event */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <CardTitle>Manage Events</CardTitle>
               <CardDescription>
@@ -188,12 +188,13 @@ export const EventManagement = () => {
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => resetForm()}>
+                <Button onClick={() => resetForm()} size="sm" className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
-                  New Event
+                  <span className="hidden sm:inline">New Event</span>
+                  <span className="sm:hidden">New</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editingId ? 'Edit Event' : 'Create New Event'}
@@ -223,7 +224,7 @@ export const EventManagement = () => {
                       rows={3}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="date">Date*</Label>
                       <Input
@@ -265,11 +266,11 @@ export const EventManagement = () => {
                       required
                     />
                   </div>
-                  <div className="flex gap-2">
-                    <Button type="submit" disabled={submitting}>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
                       {submitting ? 'Saving...' : (editingId ? 'Update' : 'Create')} Event
                     </Button>
-                    <Button type="button" variant="outline" onClick={resetForm}>
+                    <Button type="button" variant="outline" onClick={resetForm} className="w-full sm:w-auto">
                       Cancel
                     </Button>
                   </div>
@@ -297,56 +298,64 @@ export const EventManagement = () => {
                   key={event.id}
                   className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                    <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-lg mb-3">{event.name}</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3 text-sm text-muted-foreground">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3 text-sm text-muted-foreground">
                         <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-2" />
-                          {new Date(event.date).toLocaleDateString('en-US', { 
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
+                          <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+                          <span className="truncate">
+                            {new Date(event.date).toLocaleDateString('en-US', { 
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </span>
                         </div>
                         <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-2" />
-                          {new Date(`2000-01-01T${event.time}`).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                          })}
+                          <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
+                          <span className="truncate">
+                            {new Date(`2000-01-01T${event.time}`).toLocaleTimeString('en-US', {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              hour12: true
+                            })}
+                          </span>
                         </div>
                         <div className="flex items-center">
-                          <MapPin className="h-4 w-4 mr-2" />
-                          {event.location}
+                          <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                          <span className="truncate">{event.location}</span>
                         </div>
                         <div className="flex items-center">
-                          <Users className="h-4 w-4 mr-2" />
-                          {event.participants}
+                          <Users className="h-4 w-4 mr-2 flex-shrink-0" />
+                          <span className="truncate">{event.participants}</span>
                         </div>
                       </div>
                       {event.description && (
-                        <p className="text-muted-foreground whitespace-pre-wrap">
+                        <p className="text-muted-foreground whitespace-pre-wrap break-words">
                           {event.description}
                         </p>
                       )}
                     </div>
-                    <div className="flex gap-2 ml-4">
+                    <div className="flex flex-row sm:flex-col gap-2 justify-end">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleEdit(event)}
+                        className="flex-1 sm:flex-none"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-4 w-4 sm:mr-0 mr-2" />
+                        <span className="sm:hidden">Edit</span>
                       </Button>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDelete(event.id)}
+                        className="flex-1 sm:flex-none"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 sm:mr-0 mr-2" />
+                        <span className="sm:hidden">Delete</span>
                       </Button>
                     </div>
                   </div>

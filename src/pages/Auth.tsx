@@ -7,43 +7,27 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // Signup form fields
-  const [fullName, setFullName] = useState('');
-  const [grade, setGrade] = useState('');
-  const [whyJoinClub, setWhyJoinClub] = useState('');
-  const [availableThursdays, setAvailableThursdays] = useState('');
-  const [interestedCompetitions, setInterestedCompetitions] = useState('');
-  const [accessibilityNeeds, setAccessibilityNeeds] = useState('');
-  const [interestedInterschool, setInterestedInterschool] = useState('');
-  const [preferredPrizes, setPreferredPrizes] = useState('');
-  const [previousExperience, setPreviousExperience] = useState('');
-  const [recentMathGrade, setRecentMathGrade] = useState('');
-  const [agreedToRules, setAgreedToRules] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [showVerification, setShowVerification] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState<string>('');
+  
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const redirectUrl = `${window.location.origin}/`;
-    const {
-      data,
-      error
-    } = await supabase.auth.signUp({
+    
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: redirectUrl
-      }
     });
+    
     if (error) {
       toast({
         title: "Sign Up Error",
@@ -51,35 +35,38 @@ const Auth = () => {
         variant: "destructive"
       });
     } else if (data.user) {
-      // Create profile with all the form data
-      const {
-        error: profileError
-      } = await supabase.from('profiles').insert({
-        user_id: data.user.id,
-        full_name: fullName,
-        grade: parseInt(grade),
-        why_join_club: whyJoinClub,
-        available_thursdays: availableThursdays === 'yes',
-        interested_competitions: interestedCompetitions === 'yes',
-        accessibility_needs: accessibilityNeeds,
-        interested_interschool: interestedInterschool,
-        preferred_prizes: preferredPrizes,
-        previous_experience: previousExperience,
-        recent_math_grade: recentMathGrade,
-        agreed_to_rules: agreedToRules
+      setPendingUserId(data.user.id);
+      setShowVerification(true);
+      toast({
+        title: "Check Your Email",
+        description: "We've sent you a verification code. Please check your email and enter the code below."
       });
-      if (profileError) {
-        toast({
-          title: "Profile Creation Error",
-          description: profileError.message,
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Check Your Email",
-          description: "We've sent you a confirmation link to complete your registration."
-        });
-      }
+    }
+    setLoading(false);
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: verificationCode,
+      type: 'signup'
+    });
+    
+    if (error) {
+      toast({
+        title: "Verification Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else if (data.user) {
+      toast({
+        title: "Account Verified!",
+        description: "Your account has been successfully created and verified."
+      });
+      navigate('/');
     }
     setLoading(false);
   };
@@ -145,123 +132,74 @@ const Auth = () => {
               </TabsContent>
               
               <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4 max-h-96 overflow-y-auto">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-fullname">Full Name *</Label>
-                    <Input id="signup-fullname" type="text" placeholder="Enter your full name" value={fullName} onChange={e => setFullName(e.target.value)} required />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Student Email *</Label>
-                    <Input id="signup-email" type="email" placeholder="your.email@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password *</Label>
-                    <Input id="signup-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-grade">Grade *</Label>
-                    <select id="signup-grade" className="w-full p-2 border border-input rounded-md bg-background" value={grade} onChange={e => setGrade(e.target.value)} required>
-                      <option value="">Select your grade</option>
-                      <option value="9">Grade 9</option>
-                      <option value="10">Grade 10</option>
-                      <option value="11">Grade 11</option>
-                      <option value="12">Grade 12</option>
-                    </select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-why">Why do you want to join the Math Club? *</Label>
-                    <textarea id="signup-why" className="w-full p-2 border border-input rounded-md bg-background min-h-[80px]" placeholder="Tell us why you're interested..." value={whyJoinClub} onChange={e => setWhyJoinClub(e.target.value)} required />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Are you free on Thursdays at lunch for meetings? *</Label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2">
-                        <input type="radio" name="thursdays" value="yes" checked={availableThursdays === 'yes'} onChange={e => setAvailableThursdays(e.target.value)} required />
-                        Yes
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input type="radio" name="thursdays" value="no" checked={availableThursdays === 'no'} onChange={e => setAvailableThursdays(e.target.value)} required />
-                        No
-                      </label>
+                {!showVerification ? (
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email *</Label>
+                      <Input 
+                        id="signup-email" 
+                        type="email" 
+                        placeholder="your.email@example.com" 
+                        value={email} 
+                        onChange={e => setEmail(e.target.value)} 
+                        required 
+                      />
                     </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Are you interested in competing in tournaments? *</Label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2">
-                        <input type="radio" name="competitions" value="yes" checked={interestedCompetitions === 'yes'} onChange={e => setInterestedCompetitions(e.target.value)} required />
-                        Yes
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input type="radio" name="competitions" value="no" checked={interestedCompetitions === 'no'} onChange={e => setInterestedCompetitions(e.target.value)} required />
-                        No
-                      </label>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password *</Label>
+                      <Input 
+                        id="signup-password" 
+                        type="password" 
+                        value={password} 
+                        onChange={e => setPassword(e.target.value)} 
+                        required 
+                        minLength={6} 
+                        placeholder="Minimum 6 characters"
+                      />
                     </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-accessibility">Is there anything we should know to make the club more welcoming or accessible for you?</Label>
-                    <textarea id="signup-accessibility" className="w-full p-2 border border-input rounded-md bg-background min-h-[60px]" placeholder="Optional - let us know if you have any needs..." value={accessibilityNeeds} onChange={e => setAccessibilityNeeds(e.target.value)} />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Are you interested in participating in inter-school math activities? *</Label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2">
-                        <input type="radio" name="interschool" value="yes" checked={interestedInterschool === 'yes'} onChange={e => setInterestedInterschool(e.target.value)} required />
-                        Yes
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input type="radio" name="interschool" value="no" checked={interestedInterschool === 'no'} onChange={e => setInterestedInterschool(e.target.value)} required />
-                        No
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input type="radio" name="interschool" value="not sure" checked={interestedInterschool === 'not sure'} onChange={e => setInterestedInterschool(e.target.value)} required />
-                        Not sure
-                      </label>
+                    
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? 'Creating account...' : 'Sign Up'}
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleVerifyCode} className="space-y-4">
+                    <div className="text-center mb-4">
+                      <Mail className="h-12 w-12 mx-auto text-primary mb-2" />
+                      <h3 className="text-lg font-semibold">Check Your Email</h3>
+                      <p className="text-sm text-muted-foreground">
+                        We've sent a verification code to {email}
+                      </p>
                     </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-prizes">What types of gifts or prizes would you like to receive in Math Club competitions or activities?</Label>
-                    <textarea id="signup-prizes" className="w-full p-2 border border-input rounded-md bg-background min-h-[60px]" placeholder="Gift cards, books, math tools, etc..." value={preferredPrizes} onChange={e => setPreferredPrizes(e.target.value)} />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-experience">Have you participated in any math competitions or clubs before?</Label>
-                    <textarea id="signup-experience" className="w-full p-2 border border-input rounded-md bg-background min-h-[60px]" placeholder="Describe your previous experience..." value={previousExperience} onChange={e => setPreviousExperience(e.target.value)} />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-mathgrade">What was your final grade in your most recent math course? *</Label>
-                    <select id="signup-mathgrade" className="w-full p-2 border border-input rounded-md bg-background" value={recentMathGrade} onChange={e => setRecentMathGrade(e.target.value)} required>
-                      <option value="">Select your grade range</option>
-                      <option value="90 - 100%">90 - 100%</option>
-                      <option value="75 - 89%">75 - 89%</option>
-                      <option value="60 - 74%">60 - 74%</option>
-                      <option value="Below 60%">Below 60%</option>
-                    </select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="flex items-start gap-2">
-                      <input type="checkbox" checked={agreedToRules} onChange={e => setAgreedToRules(e.target.checked)} required className="mt-1" />
-                      <span className="text-sm">
-                        I agree to follow club rules and participate respectfully in all activities *
-                      </span>
-                    </label>
-                  </div>
-                  
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Creating account...' : 'Sign Up'}
-                  </Button>
-                </form>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="verification-code">Verification Code *</Label>
+                      <Input 
+                        id="verification-code" 
+                        type="text" 
+                        placeholder="Enter 6-digit code" 
+                        value={verificationCode} 
+                        onChange={e => setVerificationCode(e.target.value)} 
+                        required 
+                        maxLength={6}
+                      />
+                    </div>
+                    
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? 'Verifying...' : 'Verify Code'}
+                    </Button>
+                    
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      className="w-full" 
+                      onClick={() => setShowVerification(false)}
+                    >
+                      Back to Sign Up
+                    </Button>
+                  </form>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>

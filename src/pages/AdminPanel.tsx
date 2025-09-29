@@ -202,22 +202,22 @@ const AdminPanel = () => {
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <Link to="/" className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <Link to="/" className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors w-fit">
                 <ArrowLeft className="h-4 w-4" />
                 Back to Site
               </Link>
-              <h1 className="text-3xl font-bold">Admin Panel</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold">Admin Panel</h1>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <span className="text-sm text-muted-foreground truncate">
                 Welcome, {displayName || user.email}
               </span>
-              <Button onClick={handleSignOut} variant="outline" size="sm">
+              <Button onClick={handleSignOut} variant="outline" size="sm" className="w-fit">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
@@ -226,18 +226,23 @@ const AdminPanel = () => {
 
           {/* Admin Tabs */}
           <Tabs defaultValue="announcements" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="announcements">Announcements</TabsTrigger>
-              <TabsTrigger value="events">Events</TabsTrigger>
-              <TabsTrigger value="users">User Management</TabsTrigger>
-              <TabsTrigger value="profile">Profile Settings</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-auto">
+              <TabsTrigger value="announcements" className="text-xs sm:text-sm px-2 py-2">
+                <span className="hidden sm:inline">Announcements</span>
+                <span className="sm:hidden">News</span>
+              </TabsTrigger>
+              <TabsTrigger value="events" className="text-xs sm:text-sm px-2 py-2">Events</TabsTrigger>
+              <TabsTrigger value="users" className="text-xs sm:text-sm px-2 py-2">
+                <span className="hidden sm:inline">User Management</span>
+                <span className="sm:hidden">Users</span>
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="announcements" className="space-y-6">
               {/* Create/Edit Announcement */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <CardTitle>Manage Announcements</CardTitle>
                       <CardDescription>
@@ -246,21 +251,22 @@ const AdminPanel = () => {
                     </div>
                     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button onClick={() => resetForm()}>
+                        <Button onClick={() => resetForm()} size="sm" className="w-full sm:w-auto">
                           <Plus className="h-4 w-4 mr-2" />
-                          New Announcement
+                          <span className="hidden sm:inline">New Announcement</span>
+                          <span className="sm:hidden">New</span>
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>
-                            {editingId ? 'Edit Announcement' : 'Create New Announcement'}
-                          </DialogTitle>
-                          <DialogDescription>
-                            {editingId ? 'Update the announcement details' : 'Fill in the details for your new announcement'}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                         <DialogHeader>
+                           <DialogTitle>
+                             {editingId ? 'Edit Announcement' : 'Create New Announcement'}
+                           </DialogTitle>
+                           <DialogDescription>
+                             {editingId ? 'Update the announcement details' : 'Fill in the details for your new announcement'}
+                           </DialogDescription>
+                         </DialogHeader>
+                         <form onSubmit={handleSubmit} className="space-y-4">
                           <div className="space-y-2">
                             <Label htmlFor="creator">Creator Name</Label>
                             <Input
@@ -290,14 +296,14 @@ const AdminPanel = () => {
                               required
                             />
                           </div>
-                          <div className="flex gap-2">
-                            <Button type="submit" disabled={submitting}>
-                              {submitting ? 'Saving...' : (editingId ? 'Update' : 'Create')} Announcement
-                            </Button>
-                            <Button type="button" variant="outline" onClick={resetForm}>
-                              Cancel
-                            </Button>
-                          </div>
+                           <div className="flex flex-col sm:flex-row gap-2">
+                             <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
+                               {submitting ? 'Saving...' : (editingId ? 'Update' : 'Create')} Announcement
+                             </Button>
+                             <Button type="button" variant="outline" onClick={resetForm} className="w-full sm:w-auto">
+                               Cancel
+                             </Button>
+                           </div>
                         </form>
                       </DialogContent>
                     </Dialog>
@@ -322,9 +328,9 @@ const AdminPanel = () => {
                           key={announcement.id}
                           className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                         >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
+                          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
                                 <span className="font-medium">
                                   {announcement.creator_name || 'Unknown'}
                                 </span>
@@ -335,24 +341,28 @@ const AdminPanel = () => {
                               {announcement.title && (
                                 <h3 className="font-semibold mb-2">{announcement.title}</h3>
                               )}
-                              <p className="text-muted-foreground whitespace-pre-wrap">
+                              <p className="text-muted-foreground whitespace-pre-wrap break-words">
                                 {announcement.text}
                               </p>
                             </div>
-                            <div className="flex gap-2 ml-4">
+                            <div className="flex flex-row sm:flex-col gap-2 sm:ml-4 justify-end">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleEdit(announcement)}
+                                className="flex-1 sm:flex-none"
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit className="h-4 w-4 sm:mr-0 mr-2" />
+                                <span className="sm:hidden">Edit</span>
                               </Button>
                               <Button
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => handleDelete(announcement.id)}
+                                className="flex-1 sm:flex-none"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4 sm:mr-0 mr-2" />
+                                <span className="sm:hidden">Delete</span>
                               </Button>
                             </div>
                           </div>
@@ -370,10 +380,6 @@ const AdminPanel = () => {
             
             <TabsContent value="users">
               <UserManagement />
-            </TabsContent>
-            
-            <TabsContent value="profile">
-              <ProfileSettings />
             </TabsContent>
           </Tabs>
         </div>

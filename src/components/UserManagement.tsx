@@ -211,12 +211,12 @@ export const UserManagement = () => {
           {users.map((user) => (
             <div
               key={user.user_id}
-              className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+              className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors gap-4"
             >
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
-                  <User className="h-4 w-4" />
-                  <div className="flex-1">
+                  <User className="h-4 w-4 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
                     {editingProfile === user.user_id ? (
                       <div className="flex items-center gap-2">
                         <Input
@@ -234,12 +234,12 @@ export const UserManagement = () => {
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <p className="font-medium">
+                        <p className="font-medium truncate">
                           {user.full_name || user.display_name || 'No name set'}
                         </p>
                       </div>
                     )}
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground truncate">
                       {user.email.includes('@') ? user.email : `ID: ${user.user_id.slice(0, 8)}...`}
                     </p>
                   </div>
@@ -257,9 +257,9 @@ export const UserManagement = () => {
               </div>
               
               {isOverseer && (
-                <div className="flex gap-2 ml-4">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Select onValueChange={(role: 'admin' | 'user' | 'overseer' | 'editor') => updateUserRole(user.user_id, 'add', role)}>
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-full sm:w-32">
                       <SelectValue placeholder="Add role" />
                     </SelectTrigger>
                     <SelectContent>
@@ -271,7 +271,7 @@ export const UserManagement = () => {
                   
                   {user.roles.length > 0 && (
                     <Select onValueChange={(role: 'admin' | 'user' | 'overseer' | 'editor') => updateUserRole(user.user_id, 'remove', role)}>
-                      <SelectTrigger className="w-36">
+                      <SelectTrigger className="w-full sm:w-36">
                         <SelectValue placeholder="Remove role" />
                       </SelectTrigger>
                       <SelectContent>

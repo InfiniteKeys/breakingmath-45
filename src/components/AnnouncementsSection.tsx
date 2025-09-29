@@ -1,21 +1,18 @@
-import { Bell, Award, Calendar, Users, Megaphone } from "lucide-react";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { AlertCircle, Info, Star, Megaphone } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 interface Announcement {
   id: string;
-  title: string | null;
-  text: string | null;
+  title: string;
+  content: string;
+  type: 'info' | 'celebration' | 'general';
   creator_name: string | null;
-  creation_time: string | null;
   created_at: string;
 }
 const AnnouncementsSection = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
-  const {
-    toast
-  } = useToast();
   const fetchAnnouncements = async () => {
     try {
       const {
@@ -26,21 +23,21 @@ const AnnouncementsSection = () => {
       });
       if (error) {
         console.error('Error fetching announcements:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch announcements from database",
-          variant: "destructive"
-        });
         return;
       }
-      setAnnouncements(data || []);
+
+      // Transform data to match our interface
+      const transformedData = data?.map(item => ({
+        id: item.id,
+        title: item.title || 'Announcement',
+        content: item.text || '',
+        type: 'general' as const,
+        creator_name: item.creator_name,
+        created_at: item.creation_time || item.created_at
+      })) || [];
+      setAnnouncements(transformedData);
     } catch (error) {
       console.error('Error fetching announcements:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch announcements",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }
@@ -60,135 +57,136 @@ const AnnouncementsSection = () => {
   // Static announcements as fallback when no admin announcements
   const staticAnnouncements = [{
     id: 1,
-    type: "success",
-    icon: Award,
+    type: "celebration" as const,
     title: "Congratulations to Our Winners!",
     date: "December 15, 2023",
     content: "Sarah Chen and Marcus Johnson placed 1st and 3rd respectively at the Regional Math Competition. Amazing work representing Breaking Math!"
   }, {
     id: 2,
-    type: "info",
-    icon: Calendar,
+    type: "info" as const,
     title: "Winter Break Meeting Schedule",
     date: "December 10, 2023",
     content: "Please note that our regular meetings will resume on January 8th, 2024. We'll be sending out competition prep materials during the break."
   }, {
     id: 3,
-    type: "announcement",
-    icon: Users,
+    type: "general" as const,
     title: "New Member Orientation",
     date: "December 8, 2023",
     content: "Welcome to all our new members who joined this month! Orientation session will be held next Wednesday at 3:30 PM in Room 205."
   }];
   const getAnnouncementStyle = (type?: string) => {
     switch (type) {
-      case "success":
-        return "border-l-4 border-l-green-500 bg-green-50 dark:bg-green-950/20";
+      case "celebration":
+        return "border-green-200";
       case "info":
-        return "border-l-4 border-l-blue-500 bg-blue-50 dark:bg-blue-950/20";
-      case "announcement":
-        return "border-l-4 border-l-accent bg-accent/5";
+        return "border-blue-200";
       default:
-        return "border-l-4 border-l-primary bg-primary/5";
+        return "border-primary/20";
     }
   };
   const getIconColor = (type?: string) => {
     switch (type) {
-      case "success":
-        return "text-green-600";
+      case "celebration":
+        return "bg-green-100 text-green-600";
       case "info":
-        return "text-blue-600";
-      case "announcement":
-        return "text-accent";
+        return "bg-blue-100 text-blue-600";
       default:
-        return "text-primary";
+        return "bg-primary/10 text-primary";
     }
   };
-  return <section id="announcements" className="py-20 bg-muted/20">
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
-          {/* Section Header */}
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-6">
-              <Bell className="h-4 w-4" />
-              <span className="text-sm font-medium">Latest Updates</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">Announcements</h2>
-            <p className="text-xl text-muted-foreground">
-              Stay up to date with the latest news, achievements, and important information from Breaking Math.
-            </p>
-          </div>
+  return <section className="py-20 px-4 relative overflow-hidden">
+      {/* Background with gradient and blur effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10"></div>
+      <div className="absolute inset-0 backdrop-blur-sm"></div>
+      
+      <div className="max-w-4xl mx-auto relative z-10">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Latest Announcements
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Stay updated with the latest news, events, and important information from Breaking Math Club
+          </p>
+        </div>
 
-          {loading ? <div className="text-center py-12">
-              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading announcements...</p>
-            </div> : announcements.length === 0 ?
-        // Show static announcements when no admin announcements
-        <div className="space-y-6">
-              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
-                  <Megaphone className="w-5 h-5" />
-                  <span className="font-medium">No announcements yet</span>
-                </div>
-                <p className="text-sm text-blue-700 dark:text-blue-300 mt-2">
-                  Administrators can create announcements through the admin panel. Here are some example announcements:
-                </p>
-              </div>
-              
-              {staticAnnouncements.map(announcement => {
-            const IconComponent = announcement.icon;
-            return <div key={announcement.id} className={`rounded-lg p-6 ${getAnnouncementStyle(announcement.type)} hover:shadow-md transition-shadow`}>
-                    <div className="flex items-start space-x-4">
-                      <div className={`flex-shrink-0 ${getIconColor(announcement.type)}`}>
-                        <IconComponent className="h-6 w-6" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-semibold">{announcement.title}</h3>
-                          <span className="text-sm text-muted-foreground">{announcement.date}</span>
-                        </div>
-                        <p className="text-muted-foreground leading-relaxed">
-                          {announcement.content}
-                        </p>
-                      </div>
-                    </div>
-                  </div>;
-          })}
-            </div> :
-        // Show admin panel announcements
-        <div className="space-y-6">
-              {announcements.map(announcement => <div key={announcement.id} className={`rounded-lg p-6 ${getAnnouncementStyle()} hover:shadow-md transition-shadow`}>
-                  <div className="flex items-start space-x-4">
-                    <div className={`flex-shrink-0 ${getIconColor()}`}>
-                      <Megaphone className="h-6 w-6" />
-                    </div>
+        {loading ? <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="mt-4 text-muted-foreground">Loading announcements...</p>
+          </div> : <div className="space-y-6">
+            {announcements.length > 0 ? announcements.map((announcement, index) => <div key={announcement.id || index} className="backdrop-blur-md rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 bg-gray-900">
+                  {/* Twitter-style header */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src="" alt={announcement.creator_name || "User"} />
+                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                        {announcement.creator_name ? announcement.creator_name.charAt(0).toUpperCase() : "A"}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-lg font-semibold">
-                          {announcement.title || 'Announcement'}
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-foreground text-lg">
+                          {announcement.creator_name || "Admin"}
                         </h3>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDate(announcement.creation_time || announcement.created_at)}
-                        </span>
+                        <div className={`p-1 rounded-full ${getIconColor(announcement.type)}`}>
+                          {announcement.type === 'info' && <Info className="w-4 h-4" />}
+                          {announcement.type === 'celebration' && <Star className="w-4 h-4" />}
+                          {announcement.type === 'general' && <Megaphone className="w-4 h-4" />}
+                        </div>
                       </div>
-                      <div className="text-muted-foreground leading-relaxed">
-                        {announcement.text ? <div dangerouslySetInnerHTML={{
-                    __html: announcement.text.replace(/\n/g, '<br />')
-                  }} /> : <em>No content</em>}
-                      </div>
-                      {announcement.creator_name && <div className="mt-2 text-sm text-muted-foreground">
-                          — {announcement.creator_name}
-                        </div>}
+                      <p className="text-sm text-muted-foreground">
+                        {formatDate(announcement.created_at)}
+                      </p>
                     </div>
                   </div>
+                  
+                  {/* Tweet content */}
+                  <div className="ml-15">
+                    <h4 className="font-semibold text-lg mb-2 text-foreground">
+                      {announcement.title}
+                    </h4>
+                    <div className="text-foreground/90 leading-relaxed font-medium" dangerouslySetInnerHTML={{
+              __html: announcement.content
+            }} />
+                  </div>
+                </div>) :
+        // Static announcements fallback
+        staticAnnouncements.map((announcement, index) => <div key={index} className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20">
+                  {/* Twitter-style header */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src="" alt="Admin" />
+                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                        A
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-foreground text-lg">
+                          Breaking Math Admin
+                        </h3>
+                        <div className={`p-1 rounded-full ${getIconColor(announcement.type)}`}>
+                          {announcement.type === 'info' && <Info className="w-4 h-4" />}
+                          {announcement.type === 'celebration' && <Star className="w-4 h-4" />}
+                          {announcement.type === 'general' && <Megaphone className="w-4 h-4" />}
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {announcement.date}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Tweet content */}
+                  <div className="ml-15">
+                    <h4 className="font-semibold text-lg mb-2 text-foreground">
+                      {announcement.title}
+                    </h4>
+                    <div className="text-foreground/90 leading-relaxed font-medium" dangerouslySetInnerHTML={{
+              __html: announcement.content
+            }} />
+                  </div>
                 </div>)}
-            </div>}
-
-          {/* Newsletter Signup */}
-          <div className="mt-16 text-center">
-            
-          </div>
-        </div>
+          </div>}
       </div>
     </section>;
 };
