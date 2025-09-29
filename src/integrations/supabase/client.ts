@@ -8,29 +8,55 @@ const PROXY_URL = "https://breakingmath.club/.netlify/functions/proxy";
 
 // Custom fetch function that routes all requests through the Netlify proxy
 const proxyFetch = async (url: string, options: RequestInit = {}) => {
-  // Extract the path from the Supabase URL
-  const supabaseUrl = new URL(url);
-  const endpoint = supabaseUrl.pathname + supabaseUrl.search;
-  
-  // Prepare the request body for the proxy
-  const proxyBody = {
-    endpoint,
-    method: options.method || 'GET',
-    body: options.body,
-    headers: options.headers || {}
-  };
+  try {
+    console.log('Proxying request to:', url);
+    
+    // Extract the path from the Supabase URL
+    const supabaseUrl = new URL(url);
+    const endpoint = supabaseUrl.pathname + supabaseUrl.search;
+    
+    console.log('Extracted endpoint:', endpoint);
+    
+    // Prepare the request body for the proxy
+    const proxyBody = {
+      endpoint,
+      method: options.method || 'GET',
+      body: options.body,
+      headers: options.headers || {}
+    };
 
-  // Make the request through the proxy
-  const response = await fetch(PROXY_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(proxyBody)
-  });
+    console.log('Proxy request body:', JSON.stringify(proxyBody, null, 2));
 
-  // Return the response with the same interface as the original fetch
-  return response;
+    // Make the request through the proxy
+    const response = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(proxyBody)
+    });
+
+    console.log('Proxy response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Proxy error response:', errorText);
+      throw new Error(`Proxy request failed: ${response.status}`);
+    }
+
+    const responseText = await response.text();
+    console.log('Proxy response text:', responseText.substring(0, 200));
+    
+    // Create a new response with the same data for Supabase client consumption
+    return new Response(responseText, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers
+    });
+  } catch (error) {
+    console.error('Proxy fetch error:', error);
+    throw error;
+  }
 };
 
 // Import the supabase client like this:
