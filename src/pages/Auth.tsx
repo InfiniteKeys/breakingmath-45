@@ -94,8 +94,7 @@ const Auth = () => {
     }
     setLoading(false);
   };
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center p-4">
+  return <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="mb-8">
           <Link to="/" className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors">
@@ -106,128 +105,26 @@ const Auth = () => {
         
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-            <CardDescription>Sign in to your account or create a new one</CardDescription>
+            <CardTitle className="text-2xl font-bold">Access Restricted</CardTitle>
+            <CardDescription>User registration is currently disabled</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
-                    <Input 
-                      id="signin-email" 
-                      type="email" 
-                      placeholder="you@example.com" 
-                      value={email} 
-                      onChange={e => setEmail(e.target.value)} 
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
-                    <Input 
-                      id="signin-password" 
-                      type="password" 
-                      value={password} 
-                      onChange={e => setPassword(e.target.value)} 
-                      required 
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Signing in...' : 'Sign In'}
-                  </Button>
-                </form>
-              </TabsContent>
-              
-              <TabsContent value="signup">
-                {!showVerification ? (
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <Input 
-                        id="signup-email" 
-                        type="email" 
-                        placeholder="you@example.com" 
-                        value={email} 
-                        onChange={e => setEmail(e.target.value)} 
-                        required 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Password</Label>
-                      <Input 
-                        id="signup-password" 
-                        type="password" 
-                        value={password} 
-                        onChange={e => setPassword(e.target.value)} 
-                        required 
-                        minLength={6} 
-                      />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? 'Creating account...' : 'Create Account'}
-                    </Button>
-                  </form>
-                ) : (
-                  <form onSubmit={handleVerifyCode} className="space-y-4">
-                    <div className="text-center mb-4">
-                      <Mail className="h-12 w-12 mx-auto text-primary mb-2" />
-                      <h3 className="text-lg font-semibold">Check Your Email</h3>
-                      <p className="text-sm text-muted-foreground">
-                        We've sent a verification code to {email}
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="verification-code">Verification Code</Label>
-                      <Input 
-                        id="verification-code" 
-                        type="text" 
-                        placeholder="Enter 6-digit code" 
-                        value={verificationCode} 
-                        onChange={e => setVerificationCode(e.target.value)} 
-                        required 
-                        maxLength={6}
-                      />
-                    </div>
-                    
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? 'Verifying...' : 'Verify Account'}
-                    </Button>
-                    
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      className="w-full" 
-                      onClick={() => setShowVerification(false)}
-                    >
-                      Back to Sign Up
-                    </Button>
-                  </form>
-                )}
-              </TabsContent>
-            </Tabs>
-            
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground mb-2">
-                Administrator access
+            <div className="text-center p-8">
+              <p className="text-muted-foreground mb-6">
+                Regular user registration has been disabled. Only administrators can create accounts.
               </p>
               <Link to="/admins">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" className="mb-4">
                   Admin Login
                 </Button>
               </Link>
+              <p className="text-sm text-muted-foreground">
+                Contact an administrator if you need access.
+              </p>
             </div>
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
 export default Auth;
