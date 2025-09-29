@@ -132,7 +132,7 @@ export type Database = {
           available_thursdays: boolean | null
           created_at: string
           display_name: string | null
-          full_name: string
+          full_name: string | null
           grade: string | null
           id: string
           interested_competitions: string[] | null
@@ -150,7 +150,7 @@ export type Database = {
           available_thursdays?: boolean | null
           created_at?: string
           display_name?: string | null
-          full_name: string
+          full_name?: string | null
           grade?: string | null
           id?: string
           interested_competitions?: string[] | null
@@ -168,7 +168,7 @@ export type Database = {
           available_thursdays?: boolean | null
           created_at?: string
           display_name?: string | null
-          full_name?: string
+          full_name?: string | null
           grade?: string | null
           id?: string
           interested_competitions?: string[] | null
