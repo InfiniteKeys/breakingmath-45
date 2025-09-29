@@ -24,9 +24,6 @@ const Header = () => {
     label: "Announcements",
     href: "/announcements"
   }, {
-    label: "Join",
-    href: "#join"
-  }, {
     label: "Contact",
     href: "#contact"
   }];
@@ -101,8 +98,8 @@ const Header = () => {
               {isAdmin && <Link to="/admin" className="text-foreground hover:text-primary transition-colors font-medium py-2" onClick={() => setIsMenuOpen(false)}>
                   Admin Panel
                 </Link>}
-              {!user && <Link to="/auth" className="text-foreground hover:text-primary transition-colors font-medium py-2" onClick={() => setIsMenuOpen(false)}>
-                  Sign In
+              {!user && <Link to="/admins" className="text-foreground hover:text-primary transition-colors font-medium py-2" onClick={() => setIsMenuOpen(false)}>
+                  Admin Login
                 </Link>}
             </div>
           </nav>}

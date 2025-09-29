@@ -18,28 +18,28 @@ const EventsSection = () => {
   }, []);
   const fetchEvents = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('public_events').select('*').order('date', {
-        ascending: true
+      // Use the proxy to avoid CORS issues
+      const response = await fetch('/.netlify/functions/proxy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          endpoint: '/rest/v1/public_events?select=*&order=date.asc',
+          method: 'GET'
+        })
       });
-      if (error) {
-        console.error('Error fetching events:', error);
-        // Show user-friendly message for network issues
-        if (error.message.includes('NetworkError') || error.message.includes('CORS')) {
-          console.warn('Network connectivity issue detected. This may be due to network restrictions.');
-        }
-      } else {
+      
+      if (response.ok) {
+        const data = await response.json();
         setEvents(data || []);
+      } else {
+        console.error('Error fetching events via proxy:', response.status);
+        setEvents([]);
       }
     } catch (error) {
       console.error('Error fetching events:', error);
-      // Fallback to static content if network is completely blocked
-      if (error instanceof TypeError && error.message.includes('NetworkError')) {
-        console.warn('Using fallback mode due to network restrictions');
-        setEvents([]);
-      }
+      setEvents([]);
     } finally {
       setLoading(false);
     }
